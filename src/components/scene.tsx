@@ -7,6 +7,8 @@ import { AUTO_ROTATION_ACCEL, AUTO_ROTATION_SPEED, DRAG_SPEED_FACTOR, INERTIA_DA
 import { createLight } from "@/lib/objects/light"
 import { createMoon } from "@/lib/objects/the-moon"
 
+const CURSOR_HIDE_DELAY = 2000 // ms
+
 export function Scene() {
 	const mountRef = useRef<HTMLDivElement>(null)
 
@@ -36,6 +38,7 @@ export function Scene() {
 		let prevY = 0
 		let inertia = new Vector2(0, 0)
 		let moonRotationSpeed = 0
+		let lastMouseMove = Date.now()
 
 		// mouse events
 		const handleMouseDown = (e: MouseEvent) => {
@@ -43,22 +46,29 @@ export function Scene() {
 			prevX = e.clientX
 			prevY = e.clientY
 			mount.style.cursor = "grabbing"
+			lastMouseMove = Date.now()
 		}
 
 		const handleMouseMove = (e: MouseEvent) => {
-			if (!isDragging) return
 			const deltaX = e.clientX - prevX
 			const deltaY = e.clientY - prevY
 
-			const qx = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), deltaX * DRAG_SPEED_FACTOR)
-			const qy = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), deltaY * DRAG_SPEED_FACTOR)
-			world.quaternion.multiplyQuaternions(qx, world.quaternion)
-			world.quaternion.multiplyQuaternions(qy, world.quaternion)
+			if (isDragging) {
+				const qx = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), deltaX * DRAG_SPEED_FACTOR)
+				const qy = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), deltaY * DRAG_SPEED_FACTOR)
+				world.quaternion.multiplyQuaternions(qx, world.quaternion)
+				world.quaternion.multiplyQuaternions(qy, world.quaternion)
 
-			inertia.set(deltaX * DRAG_SPEED_FACTOR, deltaY * DRAG_SPEED_FACTOR)
+				inertia.set(deltaX * DRAG_SPEED_FACTOR, deltaY * DRAG_SPEED_FACTOR)
 
-			prevX = e.clientX
-			prevY = e.clientY
+				prevX = e.clientX
+				prevY = e.clientY
+			}
+
+			// show cursor on move
+			mount.style.cursor = isDragging ? "grabbing" : "grab"
+			lastMouseMove = Date.now()
+			mount.style.opacity = "1"
 		}
 
 		const handleMouseUp = () => {
@@ -82,6 +92,8 @@ export function Scene() {
 		const animate = () => {
 			requestAnimationFrame(animate)
 
+			const now = Date.now()
+
 			// --- WORLD ROTATION ---
 			if (!isDragging && inertia.length() > 0.00001) {
 				const qx = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), inertia.x)
@@ -97,6 +109,11 @@ export function Scene() {
 			axis.applyQuaternion(moon.quaternion).normalize()
 			const qMoon = new Quaternion().setFromAxisAngle(axis, -moonRotationSpeed)
 			moon.quaternion.multiplyQuaternions(qMoon, moon.quaternion)
+
+			// --- Cursor hide ---
+			if (now - lastMouseMove > CURSOR_HIDE_DELAY) {
+				mount.style.cursor = "none"
+			}
 
 			renderer.render(scene, camera)
 		}
