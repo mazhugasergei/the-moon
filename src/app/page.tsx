@@ -1,7 +1,9 @@
-export default function Home() {
+import { Scene } from "@/components/scene"
+
+export default function Page() {
 	return (
-		<main>
-			<div>Hello world!</div>
+		<main className="h-screen w-screen">
+			<Scene />
 		</main>
 	)
 }

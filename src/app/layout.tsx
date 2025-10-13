@@ -1,4 +1,5 @@
 import "@/assets/styles/globals.css"
+import { Header } from "@/components/header"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 export default function RootLayout(props: LayoutProps<"/">) {
 	return (
 		<html lang="en">
-			<body>{props.children}</body>
+			<body>
+				<Header />
+				{props.children}
+			</body>
 		</html>
 	)
 }
