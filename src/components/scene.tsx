@@ -7,10 +7,21 @@ import {
 	DRAG_SPEED_FACTOR,
 	INERTIA_DAMPING,
 } from "@/lib/constants"
+import { createSpaceSphere } from "@/lib/objects/galaxy"
 import { createLight } from "@/lib/objects/light"
 import { createMoon } from "@/lib/objects/moon"
+import { createStarfield } from "@/lib/objects/starfield"
 import { useEffect, useRef } from "react"
-import { Object3D, PerspectiveCamera, Quaternion, Scene as ThreeScene, Vector2, Vector3, WebGLRenderer } from "three"
+import {
+	Object3D,
+	PerspectiveCamera,
+	Quaternion,
+	SRGBColorSpace,
+	Scene as ThreeScene,
+	Vector2,
+	Vector3,
+	WebGLRenderer,
+} from "three"
 
 export function Scene() {
 	const mountRef = useRef<HTMLDivElement>(null)
@@ -21,16 +32,21 @@ export function Scene() {
 
 		// scene setup
 		const scene = new ThreeScene()
-		const camera = new PerspectiveCamera(75, mount.clientWidth / mount.clientHeight, 0.1, 1000)
+		const camera = new PerspectiveCamera(50, mount.clientWidth / mount.clientHeight, 0.1, 1000)
 		const renderer = new WebGLRenderer({ antialias: true })
 		renderer.setSize(mount.clientWidth, mount.clientHeight)
+		renderer.outputColorSpace = SRGBColorSpace
 		mount.appendChild(renderer.domElement)
 
 		// world group
 		const world = new Object3D()
 		const moon = createMoon()
 		const light = createLight()
+		const stars = createStarfield()
+		const space = createSpaceSphere()
 		world.add(moon, light)
+		// world.add(stars)
+		world.add(space)
 		scene.add(world)
 
 		camera.position.z = 5
