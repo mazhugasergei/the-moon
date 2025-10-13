@@ -51,7 +51,6 @@ export function Scene() {
 		const light = createLight({ position: [5, 2, 5], intensity: 70 })
 		const stars = createStarfield()
 		const space = createSpaceSphere()
-		// Add everything to the world
 		world.add(moon, light, stars)
 		scene.add(world)
 
@@ -63,6 +62,8 @@ export function Scene() {
 		let moonRotationSpeed = 0
 		let lastMouseMove = Date.now()
 		let targetZoom = camera.position.z
+		let pinchStartDist = 0
+		let pinchStartZoom = 0
 
 		// --- Drag handlers ---
 		const startDrag = (x: number, y: number) => {
@@ -107,14 +108,27 @@ export function Scene() {
 			if (e.touches.length === 1) {
 				const touch = e.touches[0]
 				startDrag(touch.clientX, touch.clientY)
+			} else if (e.touches.length === 2) {
+				const dx = e.touches[0].clientX - e.touches[1].clientX
+				const dy = e.touches[0].clientY - e.touches[1].clientY
+				pinchStartDist = Math.hypot(dx, dy)
+				pinchStartZoom = targetZoom
 			}
 		})
+
 		mount.addEventListener("touchmove", (e) => {
 			if (e.touches.length === 1) {
 				const touch = e.touches[0]
 				moveDrag(touch.clientX, touch.clientY)
+			} else if (e.touches.length === 2) {
+				const dx = e.touches[0].clientX - e.touches[1].clientX
+				const dy = e.touches[0].clientY - e.touches[1].clientY
+				const dist = Math.hypot(dx, dy)
+				const zoomDelta = (pinchStartDist - dist) * ZOOM_SPEED * 2.5
+				targetZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, pinchStartZoom + zoomDelta))
 			}
 		})
+
 		mount.addEventListener("touchend", endDrag)
 
 		// --- Scroll zoom ---
@@ -132,7 +146,6 @@ export function Scene() {
 		}
 		window.addEventListener("resize", handleResize)
 
-		// --- Initial cursor ---
 		mount.style.cursor = "grab"
 
 		// --- Animation loop ---
@@ -140,7 +153,6 @@ export function Scene() {
 			requestAnimationFrame(animate)
 			const now = Date.now()
 
-			// --- World inertia rotation ---
 			if (!isDragging && inertia.length() > 0.00001) {
 				const qx = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), inertia.x)
 				const qy = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), inertia.y)
@@ -149,17 +161,14 @@ export function Scene() {
 				inertia.multiplyScalar(INERTIA_DAMPING)
 			}
 
-			// --- Moon auto-rotation ---
 			moonRotationSpeed += (AUTO_ROTATION_SPEED - moonRotationSpeed) * AUTO_ROTATION_ACCEL
 			const axis = new Vector3(0, 1, 0)
 			axis.applyQuaternion(moon.quaternion).normalize()
 			const qMoon = new Quaternion().setFromAxisAngle(axis, -moonRotationSpeed)
 			moon.quaternion.multiplyQuaternions(qMoon, moon.quaternion)
 
-			// --- Smooth zoom ---
 			camera.position.z += (targetZoom - camera.position.z) * 0.03
 
-			// --- Cursor hide ---
 			if (now - lastMouseMove > CURSOR_HIDE_DELAY) mount.style.cursor = "none"
 
 			renderer.render(scene, camera)
@@ -172,8 +181,8 @@ export function Scene() {
 			mount.removeEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
 			mount.removeEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY))
 			mount.removeEventListener("mouseup", endDrag)
-			mount.removeEventListener("touchstart", (e) => startDrag(0, 0))
-			mount.removeEventListener("touchmove", (e) => moveDrag(0, 0))
+			mount.removeEventListener("touchstart", () => {})
+			mount.removeEventListener("touchmove", () => {})
 			mount.removeEventListener("touchend", endDrag)
 			mount.removeEventListener("wheel", handleWheel)
 			window.removeEventListener("resize", handleResize)
