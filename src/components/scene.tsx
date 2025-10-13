@@ -1,13 +1,16 @@
 "use client"
 
+import {
+	AUTO_ROTATION_ACCEL,
+	AUTO_ROTATION_SPEED,
+	CURSOR_HIDE_DELAY,
+	DRAG_SPEED_FACTOR,
+	INERTIA_DAMPING,
+} from "@/lib/constants"
+import { createLight } from "@/lib/objects/light"
+import { createMoon } from "@/lib/objects/moon"
 import { useEffect, useRef } from "react"
 import { Object3D, PerspectiveCamera, Quaternion, Scene as ThreeScene, Vector2, Vector3, WebGLRenderer } from "three"
-
-import { AUTO_ROTATION_ACCEL, AUTO_ROTATION_SPEED, DRAG_SPEED_FACTOR, INERTIA_DAMPING } from "@/lib/constants"
-import { createLight } from "@/lib/objects/light"
-import { createMoon } from "@/lib/objects/the-moon"
-
-const CURSOR_HIDE_DELAY = 2000 // ms
 
 export function Scene() {
 	const mountRef = useRef<HTMLDivElement>(null)
