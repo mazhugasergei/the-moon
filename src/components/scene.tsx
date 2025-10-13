@@ -3,9 +3,15 @@
 import {
 	AUTO_ROTATION_ACCEL,
 	AUTO_ROTATION_SPEED,
+	CAMERA_FAR,
+	CAMERA_FOV,
+	CAMERA_NEAR,
 	CURSOR_HIDE_DELAY,
 	DRAG_SPEED_FACTOR,
 	INERTIA_DAMPING,
+	ZOOM_MAX,
+	ZOOM_MIN,
+	ZOOM_SPEED,
 } from "@/lib/constants"
 import { createSpaceSphere } from "@/lib/objects/galaxy"
 import { createLight } from "@/lib/objects/light"
@@ -30,39 +36,35 @@ export function Scene() {
 		const mount = mountRef.current
 		if (!mount) return
 
-		// scene setup
+		// --- Scene & camera ---
 		const scene = new ThreeScene()
-		const camera = new PerspectiveCamera(40, mount.clientWidth / mount.clientHeight, 0.1, 1000)
+		const camera = new PerspectiveCamera(CAMERA_FOV, mount.clientWidth / mount.clientHeight, CAMERA_NEAR, CAMERA_FAR)
+		camera.position.z = 5
 		const renderer = new WebGLRenderer({ antialias: true })
 		renderer.setSize(mount.clientWidth, mount.clientHeight)
 		renderer.outputColorSpace = SRGBColorSpace
 		mount.appendChild(renderer.domElement)
 
-		// world group
+		// --- World ---
 		const world = new Object3D()
 		const moon = createMoon()
-		const light = createLight({
-			position: [5, 2, 5],
-			intensity: 70,
-		})
+		const light = createLight({ position: [5, 2, 5], intensity: 70 })
 		const stars = createStarfield()
 		const space = createSpaceSphere()
-		world.add(moon, light)
-		// world.add(stars)
-		world.add(space)
+		// Add everything to the world
+		world.add(moon, light, stars)
 		scene.add(world)
 
-		camera.position.z = 5
-
-		// state
+		// --- State ---
 		let isDragging = false
 		let prevX = 0
 		let prevY = 0
 		let inertia = new Vector2(0, 0)
 		let moonRotationSpeed = 0
 		let lastMouseMove = Date.now()
+		let targetZoom = camera.position.z
 
-		// unified drag handling
+		// --- Drag handlers ---
 		const startDrag = (x: number, y: number) => {
 			isDragging = true
 			prevX = x
@@ -95,51 +97,50 @@ export function Scene() {
 			mount.style.cursor = "grab"
 		}
 
-		// mouse events
-		const handleMouseDown = (e: MouseEvent) => startDrag(e.clientX, e.clientY)
-		const handleMouseMove = (e: MouseEvent) => moveDrag(e.clientX, e.clientY)
-		const handleMouseUp = () => endDrag()
+		// --- Mouse events ---
+		mount.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
+		mount.addEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY))
+		mount.addEventListener("mouseup", endDrag)
 
-		// touch events
-		const handleTouchStart = (e: TouchEvent) => {
+		// --- Touch events ---
+		mount.addEventListener("touchstart", (e) => {
 			if (e.touches.length === 1) {
 				const touch = e.touches[0]
 				startDrag(touch.clientX, touch.clientY)
 			}
-		}
-
-		const handleTouchMove = (e: TouchEvent) => {
+		})
+		mount.addEventListener("touchmove", (e) => {
 			if (e.touches.length === 1) {
 				const touch = e.touches[0]
 				moveDrag(touch.clientX, touch.clientY)
 			}
+		})
+		mount.addEventListener("touchend", endDrag)
+
+		// --- Scroll zoom ---
+		const handleWheel = (e: WheelEvent) => {
+			targetZoom += e.deltaY * ZOOM_SPEED
+			targetZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, targetZoom))
 		}
+		mount.addEventListener("wheel", handleWheel)
 
-		const handleTouchEnd = () => endDrag()
-
+		// --- Resize ---
 		const handleResize = () => {
-			if (!mount) return
 			camera.aspect = mount.clientWidth / mount.clientHeight
 			camera.updateProjectionMatrix()
 			renderer.setSize(mount.clientWidth, mount.clientHeight)
 		}
-
-		// listeners
-		mount.style.cursor = "grab"
-		mount.addEventListener("mousedown", handleMouseDown)
-		mount.addEventListener("mousemove", handleMouseMove)
-		mount.addEventListener("mouseup", handleMouseUp)
-		mount.addEventListener("touchstart", handleTouchStart)
-		mount.addEventListener("touchmove", handleTouchMove)
-		mount.addEventListener("touchend", handleTouchEnd)
 		window.addEventListener("resize", handleResize)
 
-		// animation loop
+		// --- Initial cursor ---
+		mount.style.cursor = "grab"
+
+		// --- Animation loop ---
 		const animate = () => {
 			requestAnimationFrame(animate)
 			const now = Date.now()
 
-			// --- WORLD ROTATION ---
+			// --- World inertia rotation ---
 			if (!isDragging && inertia.length() > 0.00001) {
 				const qx = new Quaternion().setFromAxisAngle(new Vector3(0, 1, 0), inertia.x)
 				const qy = new Quaternion().setFromAxisAngle(new Vector3(1, 0, 0), inertia.y)
@@ -148,12 +149,15 @@ export function Scene() {
 				inertia.multiplyScalar(INERTIA_DAMPING)
 			}
 
-			// --- MOON AUTO-ROTATION ---
+			// --- Moon auto-rotation ---
 			moonRotationSpeed += (AUTO_ROTATION_SPEED - moonRotationSpeed) * AUTO_ROTATION_ACCEL
 			const axis = new Vector3(0, 1, 0)
 			axis.applyQuaternion(moon.quaternion).normalize()
 			const qMoon = new Quaternion().setFromAxisAngle(axis, -moonRotationSpeed)
 			moon.quaternion.multiplyQuaternions(qMoon, moon.quaternion)
+
+			// --- Smooth zoom ---
+			camera.position.z += (targetZoom - camera.position.z) * 0.03
 
 			// --- Cursor hide ---
 			if (now - lastMouseMove > CURSOR_HIDE_DELAY) mount.style.cursor = "none"
@@ -162,15 +166,17 @@ export function Scene() {
 		}
 		animate()
 
+		// --- Cleanup ---
 		return () => {
-			mount.removeEventListener("mousedown", handleMouseDown)
-			mount.removeEventListener("mousemove", handleMouseMove)
-			mount.removeEventListener("mouseup", handleMouseUp)
-			mount.removeEventListener("touchstart", handleTouchStart)
-			mount.removeEventListener("touchmove", handleTouchMove)
-			mount.removeEventListener("touchend", handleTouchEnd)
-			window.removeEventListener("resize", handleResize)
 			mount.removeChild(renderer.domElement)
+			mount.removeEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
+			mount.removeEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY))
+			mount.removeEventListener("mouseup", endDrag)
+			mount.removeEventListener("touchstart", (e) => startDrag(0, 0))
+			mount.removeEventListener("touchmove", (e) => moveDrag(0, 0))
+			mount.removeEventListener("touchend", endDrag)
+			mount.removeEventListener("wheel", handleWheel)
+			window.removeEventListener("resize", handleResize)
 		}
 	}, [])
 
