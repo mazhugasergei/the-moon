@@ -23,12 +23,17 @@ export function createMoon({ radius = 0.8, showAxis = false }: MoonConfig = {}) 
 
 	const geometry = new SphereGeometry(radius, 256, 256)
 
+	// Base scales for radius = 1
+	const baseRadius = 1
+	const baseBumpScale = 0.2
+	const baseDisplacementScale = 0.05
+
 	const material = new MeshStandardMaterial({
 		map: colorTexture,
 		bumpMap: bumpTexture,
-		bumpScale: 0.2, // stronger bump
+		bumpScale: baseBumpScale * (baseRadius / radius),
 		displacementMap: bumpTexture,
-		displacementScale: 0.05, // stronger terrain
+		displacementScale: baseDisplacementScale * (baseRadius / radius),
 		roughness: 0.7,
 		metalness: 0,
 	})
