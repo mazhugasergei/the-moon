@@ -15,13 +15,13 @@ export function Header() {
 		<header className="text-white/50">
 			{mounted ? (
 				<a href={root} className="fixed top-0 left-0 z-50 p-4">
-					Home
+					home
 				</a>
 			) : (
-				<span className="fixed top-0 left-0 z-50 p-4">Home</span>
+				<span className="fixed top-0 left-0 z-50 p-4">home</span>
 			)}
 
-			<div className="fixed top-0 left-1/2 z-50 -translate-x-1/2 p-4">(Moon)</div>
+			<div className="fixed top-0 left-1/2 z-50 -translate-x-1/2 p-4">(moon)</div>
 		</header>
 	)
 }
