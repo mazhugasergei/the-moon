@@ -10,8 +10,8 @@ interface LightConfig {
 export function createLight({
 	type = "point",
 	color = 0xffffff,
-	intensity = 70,
-	position = [5, 2, 5],
+	intensity = 0,
+	position = [0, 0, 0],
 }: LightConfig = {}): Light {
 	if (type === "ambient") {
 		return new AmbientLight(color, intensity)

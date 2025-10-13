@@ -20,7 +20,7 @@ interface MoonConfig {
 }
 
 export function createMoon({
-	radius = 1,
+	radius = 0.8,
 	widthSegments = 64,
 	heightSegments = 64,
 	bumpScale = 0.05,

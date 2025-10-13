@@ -32,7 +32,7 @@ export function Scene() {
 
 		// scene setup
 		const scene = new ThreeScene()
-		const camera = new PerspectiveCamera(50, mount.clientWidth / mount.clientHeight, 0.1, 1000)
+		const camera = new PerspectiveCamera(40, mount.clientWidth / mount.clientHeight, 0.1, 1000)
 		const renderer = new WebGLRenderer({ antialias: true })
 		renderer.setSize(mount.clientWidth, mount.clientHeight)
 		renderer.outputColorSpace = SRGBColorSpace
@@ -41,7 +41,10 @@ export function Scene() {
 		// world group
 		const world = new Object3D()
 		const moon = createMoon()
-		const light = createLight()
+		const light = createLight({
+			position: [5, 2, 5],
+			intensity: 70,
+		})
 		const stars = createStarfield()
 		const space = createSpaceSphere()
 		world.add(moon, light)
