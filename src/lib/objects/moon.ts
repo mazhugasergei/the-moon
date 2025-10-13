@@ -13,30 +13,24 @@ import {
 
 interface MoonConfig {
 	radius?: number
-	widthSegments?: number
-	heightSegments?: number
-	bumpScale?: number
 	showAxis?: boolean
 }
 
-export function createMoon({
-	radius = 0.8,
-	widthSegments = 64,
-	heightSegments = 64,
-	bumpScale = 0.05,
-	showAxis = false,
-}: MoonConfig = {}) {
+export function createMoon({ radius = 0.8, showAxis = false }: MoonConfig = {}) {
 	const loader = new TextureLoader()
 	const colorTexture = loader.load(lroc_color_poles_1k.src)
 	const bumpTexture = loader.load(ldem_3_8bit.src)
 
-	const geometry = new SphereGeometry(radius, widthSegments, heightSegments)
+	const geometry = new SphereGeometry(radius, 256, 256)
+
 	const material = new MeshStandardMaterial({
 		map: colorTexture,
 		bumpMap: bumpTexture,
-		bumpScale,
+		bumpScale: 0.2, // stronger bump
+		displacementMap: bumpTexture,
+		displacementScale: 0.05, // stronger terrain
 		roughness: 0.7,
-		metalness: 0.0,
+		metalness: 0,
 	})
 
 	const moon = new Mesh(geometry, material)
