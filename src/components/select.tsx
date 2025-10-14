@@ -34,7 +34,7 @@ export function CustomSelect({ options, value, onChange, placeholder }: CustomSe
 		<div ref={ref} className="relative">
 			<button
 				type="button"
-				className="flex w-full cursor-pointer items-center justify-between rounded px-3 py-2 text-left"
+				className="flex w-full cursor-pointer items-center justify-between rounded text-left"
 				onClick={() => setOpen((prev) => !prev)}
 			>
 				<span>{selectedOption?.label ?? placeholder ?? "Select"}</span>
@@ -42,7 +42,7 @@ export function CustomSelect({ options, value, onChange, placeholder }: CustomSe
 			</button>
 
 			{open && (
-				<ul className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded border border-white/20 shadow">
+				<ul className="absolute right-0 z-10 mt-3 max-h-60 overflow-auto rounded border border-white/20 shadow">
 					{options.map((opt) => (
 						<li
 							key={opt.value}
