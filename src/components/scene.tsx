@@ -20,13 +20,13 @@ import {
 	ZOOM_MAX,
 	ZOOM_MIN,
 	ZOOM_SPEED,
-} from "@/lib/constants" // all constants controlling camera, rotations, zoom, inertia, etc.
+} from "@/lib/constants"
 import { createClouds } from "@/lib/objects/clouds"
 import { createEarth } from "@/lib/objects/earth"
 import { createMoon } from "@/lib/objects/moon"
-import { createStarfield } from "@/lib/objects/starfield" // helpers to create objects
-import { StoreProvider } from "@/providers/store" // global state provider
-import { useIndexStore } from "@/stores" // Zustand store for selected object
+import { createStarfield } from "@/lib/objects/starfield"
+import { StoreProvider } from "@/providers/store"
+import { useIndexStore } from "@/stores"
 import { useEffect, useRef } from "react"
 import {
 	DirectionalLight,
@@ -37,9 +37,8 @@ import {
 	Scene as ThreeScene,
 	Vector2,
 	WebGLRenderer,
-} from "three" // Three.js core modules
+} from "three"
 
-// Root wrapper with store
 export function Scene() {
 	return (
 		<StoreProvider>
@@ -48,14 +47,13 @@ export function Scene() {
 	)
 }
 
-// Main 3D scene component
 export function Component() {
 	const mountRef = useRef<HTMLDivElement>(null) // container div for WebGL canvas
-	const selected = useIndexStore((state) => state.selected) // 'earth' or 'moon'
+	const selected = useIndexStore((state) => state.selected)
 
 	useEffect(() => {
 		const mount = mountRef.current
-		if (!mount) return // ensure div exists
+		if (!mount) return
 
 		const scene = new ThreeScene() // main scene
 		const camera = new PerspectiveCamera(CAMERA_FOV, mount.clientWidth / mount.clientHeight, CAMERA_NEAR, CAMERA_FAR) // perspective camera
@@ -68,27 +66,28 @@ export function Component() {
 		renderer.shadowMap.type = 2 // PCFSoftShadowMap (soft shadows)
 		mount.appendChild(renderer.domElement) // add canvas to DOM
 
+		// world container
 		const world = new Object3D() // parent object to rotate entire world
+		const stars = createStarfield() // static background stars
 		const sun = new DirectionalLight(0xffffff, 1.5) // directional "sun" light
 		sun.position.set(10, 10, 10) // direction of light
-		sun.castShadow = false // not casting shadows
-
-		const stars = createStarfield() // static background stars
+		// sun.castShadow = true // cast shadows
+		world.add(stars, sun)
 
 		// placeholders for main objects
 		let mainObject: Object3D
 		let moonObject: Object3D | null = null
 		let moonPivot: Object3D | null = null
 
-		// Create moon-only scene
+		// moon-only scene
 		if (selected === "moon") {
 			const moon = createMoon({ radiusMultiplier: 3 })
 			moon.castShadow = true
 			moon.receiveShadow = true
-			world.add(sun, stars, moon) // add moon + lighting
+			world.add(moon)
 			mainObject = moon
 		} else {
-			// full Earth + Moon scene
+			// earth + moon scene
 			const earth = createEarth()
 			earth.castShadow = true
 			earth.receiveShadow = true
@@ -104,23 +103,23 @@ export function Component() {
 			moon.position.set(MOON_DISTANCE, 0, 0) // place moon at orbit distance
 			moonPivot.add(moon)
 
-			world.add(sun, stars, earth, moonPivot) // add everything to world
+			world.add(earth, moonPivot)
 
 			mainObject = earth
 			mainObject.userData = { clouds } // store clouds reference for rotation
 			moonObject = moon
 		}
 
-		scene.add(world) // add world container to scene
+		scene.add(world)
 
-		// --- Interaction & state ---
-		let isDragging = false // true while dragging
+		// interaction & state
+		let isDragging = false
 		let prevX = 0
 		let prevY = 0
 		let inertia = new Vector2(0, 0) // stores rotation speed after drag
 		let yaw = 0 // horizontal rotation
 		let pitch = 0 // vertical rotation
-		let rotationSpeed = 0 // Earth's / Moon's spin
+		let rotationSpeed = 0 // earth's / moon's spin
 		let cloudsRotationSpeed = 0 // cloud rotation
 		let moonRotationSpeed = 0 // moon's spin
 		let lastMouseMove = Date.now() // track cursor movement for hiding
@@ -128,7 +127,7 @@ export function Component() {
 		let pinchStartDist = 0 // for touch zoom
 		let pinchStartZoom = 0
 
-		// --- Drag events ---
+		// drag events
 		const startDrag = (x: number, y: number) => {
 			isDragging = true
 			prevX = x
@@ -161,7 +160,7 @@ export function Component() {
 		mount.addEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY))
 		mount.addEventListener("mouseup", endDrag)
 
-		// --- Touch events (drag + pinch zoom) ---
+		// touch events (drag + pinch zoom)
 		mount.addEventListener("touchstart", (e) => {
 			if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY)
 			else if (e.touches.length === 2) {
@@ -186,14 +185,14 @@ export function Component() {
 
 		mount.addEventListener("touchend", endDrag)
 
-		// --- Mouse wheel zoom ---
+		// mouse wheel zoom
 		const handleWheel = (e: WheelEvent) => {
 			targetZoom += e.deltaY * ZOOM_SPEED
 			targetZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, targetZoom))
 		}
 		mount.addEventListener("wheel", handleWheel)
 
-		// --- Window resize handler ---
+		// window resize handler
 		const handleResize = () => {
 			camera.aspect = mount.clientWidth / mount.clientHeight
 			camera.updateProjectionMatrix()
@@ -203,12 +202,12 @@ export function Component() {
 
 		mount.style.cursor = "grab" // initial cursor
 
-		// --- Main animation loop ---
+		// main animation loop
 		const animate = () => {
 			requestAnimationFrame(animate)
 			const now = Date.now()
 
-			// --- Inertia handling (only when not dragging) ---
+			// inertia handling (only when not dragging)
 			if (!isDragging) {
 				yaw += inertia.x
 				pitch += inertia.y
@@ -216,11 +215,11 @@ export function Component() {
 				inertia.multiplyScalar(INERTIA_DAMPING) // slow down over time
 			}
 
-			// --- Apply rotation to world ---
+			// apply rotation to world
 			world.rotation.x = pitch
 			world.rotation.y = yaw
 
-			// --- Rotate main object (Earth or Moon) ---
+			// rotate main object (earth or moon)
 			const mainRotSpeed = selected === "earth" ? EARTH_ROTATION_SPEED : MOON_ROTATION_SPEED
 			const mainRotAccel = selected === "earth" ? EARTH_ROTATION_ACCEL : MOON_ROTATION_ACCEL
 			rotationSpeed += (mainRotSpeed - rotationSpeed) * mainRotAccel // smooth acceleration
@@ -240,10 +239,10 @@ export function Component() {
 				}
 			}
 
-			// --- Smooth zoom ---
+			// smooth zoom
 			camera.position.z += (targetZoom - camera.position.z) * 0.03
 
-			// --- Cursor hide after inactivity ---
+			// cursor hide after inactivity
 			if (now - lastMouseMove > CURSOR_HIDE_DELAY) mount.style.cursor = "none"
 
 			renderer.render(scene, camera)
@@ -251,7 +250,7 @@ export function Component() {
 
 		animate() // start loop
 
-		// --- Cleanup on unmount ---
+		// cleanup on unmount
 		return () => {
 			mount.removeChild(renderer.domElement)
 			mount.removeEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
@@ -262,5 +261,5 @@ export function Component() {
 		}
 	}, [selected])
 
-	return <div ref={mountRef} className="h-full w-full touch-none" /> // container div
+	return <div ref={mountRef} className="h-full w-full touch-none" />
 }
