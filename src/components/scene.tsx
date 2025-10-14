@@ -48,29 +48,29 @@ export function Scene() {
 }
 
 export function Component() {
-	const mountRef = useRef<HTMLDivElement>(null) // container div for WebGL canvas
+	const mountRef = useRef<HTMLDivElement>(null)
 	const selected = useIndexStore((state) => state.selected)
 
 	useEffect(() => {
 		const mount = mountRef.current
 		if (!mount) return
 
-		const scene = new ThreeScene() // main scene
-		const camera = new PerspectiveCamera(CAMERA_FOV, mount.clientWidth / mount.clientHeight, CAMERA_NEAR, CAMERA_FAR) // perspective camera
-		camera.position.z = 5 // initial zoom back
+		const scene = new ThreeScene()
+		const camera = new PerspectiveCamera(CAMERA_FOV, mount.clientWidth / mount.clientHeight, CAMERA_NEAR, CAMERA_FAR)
+		camera.position.z = 5
 
-		const renderer = new WebGLRenderer({ antialias: true }) // renderer with smooth edges
+		const renderer = new WebGLRenderer({ antialias: true })
 		renderer.setSize(mount.clientWidth, mount.clientHeight)
-		renderer.outputColorSpace = SRGBColorSpace // correct colors
+		renderer.outputColorSpace = SRGBColorSpace
 		renderer.shadowMap.enabled = true
-		renderer.shadowMap.type = 2 // PCFSoftShadowMap (soft shadows)
-		mount.appendChild(renderer.domElement) // add canvas to DOM
+		renderer.shadowMap.type = 2
+		mount.appendChild(renderer.domElement)
 
 		// world container
-		const world = new Object3D() // parent object to rotate entire world
-		const stars = createStarfield() // static background stars
-		const sun = new DirectionalLight(0xffffff, 1.5) // directional "sun" light
-		sun.position.set(10, 10, 10) // direction of light
+		const world = new Object3D()
+		const stars = createStarfield()
+		const sun = new DirectionalLight(0xffffff, 1.5)
+		sun.position.set(10, 10, 10)
 		// sun.castShadow = true // cast shadows
 		world.add(stars, sun)
 
@@ -92,21 +92,21 @@ export function Component() {
 			earth.castShadow = true
 			earth.receiveShadow = true
 			const clouds = createClouds()
-			earth.add(clouds) // clouds are child of Earth
+			earth.add(clouds)
 
-			moonPivot = new Object3D() // pivot for moon orbit
-			moonPivot.rotation.x = MathUtils.degToRad(5) // tilt orbit slightly
+			moonPivot = new Object3D()
+			moonPivot.rotation.x = MathUtils.degToRad(5)
 
 			const moon = createMoon({ segments: 64 })
 			moon.castShadow = true
 			moon.receiveShadow = true
-			moon.position.set(MOON_DISTANCE, 0, 0) // place moon at orbit distance
+			moon.position.set(MOON_DISTANCE, 0, 0)
 			moonPivot.add(moon)
 
 			world.add(earth, moonPivot)
 
 			mainObject = earth
-			mainObject.userData = { clouds } // store clouds reference for rotation
+			mainObject.userData = { clouds }
 			moonObject = moon
 		}
 

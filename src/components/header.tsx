@@ -17,7 +17,6 @@ export function Component() {
 	const [mounted, setMounted] = useState(false)
 	const [root, setRoot] = useState("/")
 
-	// get Zustand store value and setter
 	const selected = useIndexStore((state) => state.selected)
 	const setSelected = useIndexStore((state) => state.setSelected)
 
@@ -35,15 +34,6 @@ export function Component() {
 			{mounted ? <a href={root}>home</a> : <span>home</span>}
 
 			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">(moon)</div>
-
-			{/* <select value={selected} onChange={handleChange} className="pr-1">
-				<option value="moon" className="bg-black">
-					moon
-				</option>
-				<option value="earth" className="bg-black">
-					earth
-				</option>
-			</select> */}
 
 			<CustomSelect
 				options={[
