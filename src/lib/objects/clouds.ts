@@ -16,7 +16,7 @@ export function createClouds({ radius = CLOUDS_RADIUS, radiusMultiplier = 1, seg
 	const material = new MeshStandardMaterial({
 		map: cloudTexture,
 		transparent: true,
-		opacity: 0.7,
+		opacity: 0.8,
 		depthWrite: false,
 	})
 

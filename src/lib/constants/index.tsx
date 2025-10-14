@@ -1,6 +1,13 @@
 export const RADIUS_MULTIPLIER = 0.00015
 export const SPEED_MULTIPLIER = 100
 
+// starfield
+export const STAR_COUNT = 1000
+export const STAR_MIN_DISTANCE = 5000 // min distance from world center
+export const STAR_SPREAD = 10000 // max distance from center
+export const STAR_MIN_SIZE = 20
+export const STAR_MAX_SIZE = 50
+
 // rotation / inertia
 export const DRAG_SPEED_FACTOR = 0.002
 export const INERTIA_DAMPING = 0.95
@@ -39,13 +46,6 @@ export const ZOOM_SPEED = 0.01 // scroll sensitivity
 // pitch limits (for vertical camera rotation, if implemented)
 export const PITCH_MIN = -Math.PI / 2 // look slightly down
 export const PITCH_MAX = Math.PI / 2 // look slightly up
-
-// starfield
-export const STAR_COUNT = 1000
-export const STAR_MIN_DISTANCE = 5000 // min distance from world center
-export const STAR_SPREAD = 10000 // max distance from center
-export const STAR_MIN_SIZE = 20
-export const STAR_MAX_SIZE = 50
 
 // camera
 export const CAMERA_FOV = 40
