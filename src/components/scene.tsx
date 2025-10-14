@@ -4,32 +4,32 @@ import {
 	CAMERA_FAR,
 	CAMERA_FOV,
 	CAMERA_NEAR,
-	CLOUDS_ROT_MULTIPLIER,
 	CLOUDS_ROTATION_ACCEL,
 	CLOUDS_ROTATION_SPEED,
 	CURSOR_HIDE_DELAY,
 	DRAG_SPEED_FACTOR,
-	EARTH_ROT_MULTIPLIER,
 	EARTH_ROTATION_ACCEL,
 	EARTH_ROTATION_SPEED,
 	INERTIA_DAMPING,
-	MOON_ORBIT_MULTIPLIER,
+	MOON_DISTANCE,
+	MOON_ORBIT_SPEED,
 	MOON_ROTATION_ACCEL,
 	MOON_ROTATION_SPEED,
-	MOON_SPIN_MULTIPLIER,
+	PITCH_MAX,
+	PITCH_MIN,
 	ZOOM_MAX,
 	ZOOM_MIN,
 	ZOOM_SPEED,
 } from "@/lib/constants"
 import { createClouds } from "@/lib/objects/clouds"
 import { createEarth } from "@/lib/objects/earth"
-import { createLight } from "@/lib/objects/light"
 import { createMoon } from "@/lib/objects/moon"
 import { createStarfield } from "@/lib/objects/starfield"
 import { StoreProvider } from "@/providers/store"
 import { useIndexStore } from "@/stores"
 import { useEffect, useRef } from "react"
 import {
+	DirectionalLight,
 	MathUtils,
 	Object3D,
 	PerspectiveCamera,
@@ -67,26 +67,33 @@ export function Component() {
 		mount.appendChild(renderer.domElement)
 
 		const world = new Object3D()
-		const light = createLight({ position: [10, 4, 10], intensity: 300 })
-		light.castShadow = false
+		const sun = new DirectionalLight(0xffffff, 1.5) // white light, intensity ~1–2
+		sun.position.set(10, 10, 10) // direction from Sun to scene
+		sun.castShadow = false
 		// light.castShadow = true
 
-		if (light.shadow) {
-			light.shadow.mapSize.width = 4096
-			light.shadow.mapSize.height = 4096
-			light.shadow.radius = 4 // soft edge
-			const cam = light.shadow.camera as PerspectiveCamera
-			cam.near = 0.1
-			cam.far = 50
-			cam.updateProjectionMatrix()
-		}
+		// if (light.shadow) {
+		// 	light.shadow.mapSize.width = 4096
+		// 	light.shadow.mapSize.height = 4096
+		// 	light.shadow.radius = 4 // soft edge
+		// 	const cam = light.shadow.camera as PerspectiveCamera
+		// 	cam.near = 0.1
+		// 	cam.far = 50
+		// 	cam.updateProjectionMatrix()
+		// }
 
 		const stars = createStarfield()
 		let mainObject: Object3D
 		let moonObject: Object3D | null = null
 		let moonPivot: Object3D | null = null
 
-		if (selected === "earth") {
+		if (selected === "moon") {
+			const moon = createMoon({ radiusMultiplier: 3 })
+			moon.castShadow = true
+			moon.receiveShadow = true
+			world.add(sun, stars, moon)
+			mainObject = moon
+		} else {
 			const earth = createEarth()
 			earth.castShadow = true
 			earth.receiveShadow = true
@@ -96,24 +103,17 @@ export function Component() {
 			moonPivot = new Object3D()
 			moonPivot.rotation.x = MathUtils.degToRad(5)
 
-			const moon = createMoon({ radius: 0.27 })
+			const moon = createMoon({ segments: 64 })
 			moon.castShadow = true
 			moon.receiveShadow = true
-			const moonDistance = 3.84
-			moon.position.set(moonDistance, 0, 0)
+			moon.position.set(MOON_DISTANCE, 0, 0)
 			moonPivot.add(moon)
 
-			world.add(light, stars, earth, moonPivot)
+			world.add(sun, stars, earth, moonPivot)
 
 			mainObject = earth
 			mainObject.userData = { clouds }
 			moonObject = moon
-		} else {
-			const moon = createMoon()
-			moon.castShadow = true
-			moon.receiveShadow = true
-			world.add(light, stars, moon)
-			mainObject = moon
 		}
 
 		scene.add(world)
@@ -203,40 +203,47 @@ export function Component() {
 
 		mount.style.cursor = "grab"
 
-		// --- Animation ---
 		const animate = () => {
 			requestAnimationFrame(animate)
 			const now = Date.now()
 
+			// --- Handle inertia ---
 			if (!isDragging && inertia.length() > 0.00001) {
 				yaw += inertia.x
 				pitch += inertia.y
-				pitch = MathUtils.clamp(pitch, -Math.PI / 2, Math.PI / 2)
+				pitch = MathUtils.clamp(pitch, PITCH_MIN, PITCH_MAX)
 				inertia.multiplyScalar(INERTIA_DAMPING)
 			}
 
-			// Lock world rotation (no roll)
+			// --- Lock world rotation (no roll) ---
 			world.rotation.set(pitch, yaw, 0)
 
-			const baseSpeed = selected === "earth" ? EARTH_ROTATION_SPEED * EARTH_ROT_MULTIPLIER : MOON_ROTATION_SPEED
-			const accel = selected === "earth" ? EARTH_ROTATION_ACCEL : MOON_ROTATION_ACCEL
-			rotationSpeed += (baseSpeed - rotationSpeed) * accel
+			// --- Rotate main object (Earth or Moon) ---
+			const mainRotSpeed = selected === "earth" ? EARTH_ROTATION_SPEED : MOON_ROTATION_SPEED
+			const mainRotAccel = selected === "earth" ? EARTH_ROTATION_ACCEL : MOON_ROTATION_ACCEL
+			rotationSpeed += (mainRotSpeed - rotationSpeed) * mainRotAccel
 			mainObject.rotateY(-rotationSpeed)
 
 			if (selected === "earth" && mainObject.userData.clouds) {
+				// --- Rotate clouds ---
 				const clouds = mainObject.userData.clouds
-				cloudsRotationSpeed +=
-					(CLOUDS_ROTATION_SPEED * CLOUDS_ROT_MULTIPLIER - cloudsRotationSpeed) * CLOUDS_ROTATION_ACCEL
+				cloudsRotationSpeed += (CLOUDS_ROTATION_SPEED - cloudsRotationSpeed) * CLOUDS_ROTATION_ACCEL
 				clouds.rotateY(-cloudsRotationSpeed)
 
-				if (moonPivot) moonPivot.rotation.y += 0.002 * MOON_ORBIT_MULTIPLIER
+				// --- Moon orbit around Earth ---
+				if (moonPivot) moonPivot.rotation.y += MOON_ORBIT_SPEED
+
+				// --- Moon spin on its own axis ---
 				if (moonObject) {
-					moonRotationSpeed += (MOON_ROTATION_SPEED * MOON_SPIN_MULTIPLIER - moonRotationSpeed) * MOON_ROTATION_ACCEL
-					moonObject.rotateY(-moonRotationSpeed)
+					moonRotationSpeed += (MOON_ROTATION_SPEED - moonRotationSpeed) * MOON_ROTATION_ACCEL
+					moonObject.rotation.y = -moonRotationSpeed
 				}
 			}
 
+			// --- Smooth zoom ---
 			camera.position.z += (targetZoom - camera.position.z) * 0.03
+
+			// --- Cursor hide ---
 			if (now - lastMouseMove > CURSOR_HIDE_DELAY) mount.style.cursor = "none"
 
 			renderer.render(scene, camera)

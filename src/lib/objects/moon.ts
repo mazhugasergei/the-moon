@@ -1,38 +1,38 @@
 import ldem_3_8bit from "@/assets/images/ldem_3_8bit.jpg"
 import lroc_color_poles_1k from "@/assets/images/lroc_color_poles_1k.jpg"
-import {
-	BufferGeometry,
-	Line,
-	LineBasicMaterial,
-	Mesh,
-	MeshStandardMaterial,
-	SphereGeometry,
-	TextureLoader,
-	Vector3,
-} from "three"
+import { Mesh, MeshStandardMaterial, SphereGeometry, TextureLoader } from "three"
+import { MOON_RADIUS } from "../constants"
+import { createAxis } from "./axis"
 
 interface MoonConfig {
 	radius?: number
+	radiusMultiplier?: number
 	segments?: number
+	bumpScale?: number
+	displacementScale?: number
 	showAxis?: boolean
 }
 
-export function createMoon({ radius = 1, segments = 256, showAxis = false }: MoonConfig = {}) {
+export function createMoon({
+	radius = MOON_RADIUS,
+	radiusMultiplier = 1,
+	segments = 256,
+	bumpScale = 2,
+	displacementScale = 0.05,
+	showAxis = false,
+}: MoonConfig = {}) {
 	const loader = new TextureLoader()
 	const colorTexture = loader.load(lroc_color_poles_1k.src)
 	const bumpTexture = loader.load(ldem_3_8bit.src)
 
-	const geometry = new SphereGeometry(radius, segments, segments)
-
-	const bumpScale = 2 * radius
-	const displacementScale = 0.05 * radius
+	const geometry = new SphereGeometry(radius * radiusMultiplier, segments, segments)
 
 	const material = new MeshStandardMaterial({
 		map: colorTexture,
 		bumpMap: bumpTexture,
-		bumpScale,
+		bumpScale: bumpScale * radius * Math.max(radiusMultiplier, 0.001), // scaled consistently
 		displacementMap: bumpTexture,
-		displacementScale,
+		displacementScale: displacementScale * radius * Math.max(radiusMultiplier, 0.001),
 		roughness: 0.7,
 		metalness: 0,
 	})
@@ -40,13 +40,10 @@ export function createMoon({ radius = 1, segments = 256, showAxis = false }: Moo
 	const moon = new Mesh(geometry, material)
 
 	if (showAxis) {
-		const axisMaterial = new LineBasicMaterial({ color: 0xffffff })
-		const axisGeometry = new BufferGeometry().setFromPoints([
-			new Vector3(0, -radius * 1.33, 0),
-			new Vector3(0, radius * 1.33, 0),
-		])
-		const rotationAxis = new Line(axisGeometry, axisMaterial)
-		moon.add(rotationAxis)
+		if (showAxis) {
+			const rotationAxis = createAxis({ length: radius * 1.33 })
+			moon.add(rotationAxis)
+		}
 	}
 
 	return moon

@@ -1,25 +1,32 @@
+export const RADIUS_MULTIPLIER = 0.00015
+export const SPEED_MULTIPLIER = 100
+
 // rotation / inertia
 export const DRAG_SPEED_FACTOR = 0.002
 export const INERTIA_DAMPING = 0.95
 
-// moon auto-rotation
-export const MOON_ROTATION_SPEED = -0.001 // negative = counterclockwise
+// moon
+export const MOON_DISTANCE_MULTIPLIER = 0.00001
+export const MOON_DISTANCE = 384400 * MOON_DISTANCE_MULTIPLIER
+export const MOON_RADIUS = 1737.4 * RADIUS_MULTIPLIER
+// spin around its own axis (sidereal rotation ~27.3 days)
+export const REAL_MOON_ROTATION_SPEED = (2 * Math.PI) / 2_359_200
+export const MOON_ROTATION_SPEED = -REAL_MOON_ROTATION_SPEED * SPEED_MULTIPLIER
 export const MOON_ROTATION_ACCEL = 0.005
+// orbit around the Earth (same period ~27.3 days)
+export const REAL_MOON_ORBIT_PERIOD = 2_359_200 // seconds
+export const MOON_ORBIT_SPEED = ((2 * Math.PI) / REAL_MOON_ORBIT_PERIOD) * SPEED_MULTIPLIER // radians/sec
 
-// earth auto-rotation
-export const EARTH_ROTATION_SPEED = -0.001 // negative = counterclockwise
+// earth
+export const EARTH_RADIUS = 6378 * RADIUS_MULTIPLIER
+export const REAL_EARTH_ROTATION_SPEED = (2 * Math.PI) / 86_400
+export const EARTH_ROTATION_SPEED = -REAL_EARTH_ROTATION_SPEED * SPEED_MULTIPLIER
 export const EARTH_ROTATION_ACCEL = 0.005
 
-// clouds auto-rotation
-export const CLOUDS_ROTATION_SPEED = -0.0001 // negative = counterclockwise
+// clouds
+export const CLOUDS_RADIUS = EARTH_RADIUS * 1.0001
+export const CLOUDS_ROTATION_SPEED = -0.00001 * SPEED_MULTIPLIER // relative to Earth
 export const CLOUDS_ROTATION_ACCEL = 0.005
-
-// rotation multipliers
-export const GENERATION_MULTIPLIER = 1
-export const EARTH_ROT_MULTIPLIER = 1 * GENERATION_MULTIPLIER
-export const CLOUDS_ROT_MULTIPLIER = 1 * GENERATION_MULTIPLIER
-export const MOON_ORBIT_MULTIPLIER = 1 * GENERATION_MULTIPLIER
-export const MOON_SPIN_MULTIPLIER = 1 * GENERATION_MULTIPLIER
 
 // cursor
 export const CURSOR_HIDE_DELAY = 2000 // ms

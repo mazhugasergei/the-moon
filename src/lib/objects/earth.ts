@@ -1,26 +1,25 @@
 import earth_winter_5400x2700 from "@/assets/images/earth_winter_5400x2700.jpg"
-import {
-	BufferGeometry,
-	Line,
-	LineBasicMaterial,
-	Mesh,
-	MeshStandardMaterial,
-	SphereGeometry,
-	TextureLoader,
-	Vector3,
-} from "three"
+import { Mesh, MeshStandardMaterial, SphereGeometry, TextureLoader } from "three"
+import { EARTH_RADIUS } from "../constants"
+import { createAxis } from "./axis"
 
 interface EarthConfig {
 	radius?: number
+	radiusMultiplier?: number
 	segments?: number
 	showAxis?: boolean
 }
 
-export function createEarth({ radius = 1, segments = 256, showAxis = false }: EarthConfig = {}) {
+export function createEarth({
+	radius = EARTH_RADIUS,
+	radiusMultiplier = 1,
+	segments = 256,
+	showAxis = false,
+}: EarthConfig = {}) {
 	const loader = new TextureLoader()
 	const colorTexture = loader.load(earth_winter_5400x2700.src)
 
-	const geometry = new SphereGeometry(radius, segments, segments)
+	const geometry = new SphereGeometry(radius * radiusMultiplier, segments, segments)
 
 	const material = new MeshStandardMaterial({
 		map: colorTexture,
@@ -31,12 +30,7 @@ export function createEarth({ radius = 1, segments = 256, showAxis = false }: Ea
 	const earth = new Mesh(geometry, material)
 
 	if (showAxis) {
-		const axisMaterial = new LineBasicMaterial({ color: 0xffffff })
-		const axisGeometry = new BufferGeometry().setFromPoints([
-			new Vector3(0, -radius * 1.33, 0),
-			new Vector3(0, radius * 1.33, 0),
-		])
-		const rotationAxis = new Line(axisGeometry, axisMaterial)
+		const rotationAxis = createAxis({ length: radius * 1.33 })
 		earth.add(rotationAxis)
 	}
 
