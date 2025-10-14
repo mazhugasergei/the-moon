@@ -216,7 +216,8 @@ export function Component() {
 			}
 
 			// --- Lock world rotation (no roll) ---
-			world.rotation.set(pitch, yaw, 0)
+			world.rotation.x = MathUtils.clamp(world.rotation.x + inertia.y, PITCH_MIN, PITCH_MAX)
+			world.rotation.y += inertia.x
 
 			// --- Rotate main object (Earth or Moon) ---
 			const mainRotSpeed = selected === "earth" ? EARTH_ROTATION_SPEED : MOON_ROTATION_SPEED

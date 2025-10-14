@@ -40,10 +40,8 @@ export function createMoon({
 	const moon = new Mesh(geometry, material)
 
 	if (showAxis) {
-		if (showAxis) {
-			const rotationAxis = createAxis({ length: radius * 1.33 })
-			moon.add(rotationAxis)
-		}
+		const rotationAxis = createAxis({ length: radius * radiusMultiplier * 1.33 })
+		moon.add(rotationAxis)
 	}
 
 	return moon

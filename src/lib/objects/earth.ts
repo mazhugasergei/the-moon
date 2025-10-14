@@ -30,7 +30,7 @@ export function createEarth({
 	const earth = new Mesh(geometry, material)
 
 	if (showAxis) {
-		const rotationAxis = createAxis({ length: radius * 1.33 })
+		const rotationAxis = createAxis({ length: radius * radiusMultiplier * 1.33 })
 		earth.add(rotationAxis)
 	}
 

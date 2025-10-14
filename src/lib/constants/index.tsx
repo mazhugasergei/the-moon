@@ -37,8 +37,8 @@ export const ZOOM_MAX = 20 // farthest
 export const ZOOM_SPEED = 0.01 // scroll sensitivity
 
 // pitch limits (for vertical camera rotation, if implemented)
-export const PITCH_MIN = -Math.PI / 6 // look slightly down
-export const PITCH_MAX = Math.PI / 6 // look slightly up
+export const PITCH_MIN = -Math.PI / 2 // look slightly down
+export const PITCH_MAX = Math.PI / 2 // look slightly up
 
 // starfield
 export const STAR_COUNT = 1000
