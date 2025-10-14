@@ -1,5 +1,4 @@
-import ldem_3_8bit from "@/assets/images/ldem_3_8bit.jpg"
-import lroc_color_poles_1k from "@/assets/images/lroc_color_poles_1k.jpg"
+import earth_winter_5400x2700 from "@/assets/images/earth_winter_5400x2700.jpg"
 import {
 	BufferGeometry,
 	Line,
@@ -11,33 +10,25 @@ import {
 	Vector3,
 } from "three"
 
-interface MoonConfig {
+interface EarthConfig {
 	radius?: number
 	segments?: number
 	showAxis?: boolean
 }
 
-export function createMoon({ radius = 1, segments = 256, showAxis = false }: MoonConfig = {}) {
+export function createEarth({ radius = 1, segments = 256, showAxis = false }: EarthConfig = {}) {
 	const loader = new TextureLoader()
-	const colorTexture = loader.load(lroc_color_poles_1k.src)
-	const bumpTexture = loader.load(ldem_3_8bit.src)
+	const colorTexture = loader.load(earth_winter_5400x2700.src)
 
 	const geometry = new SphereGeometry(radius, segments, segments)
 
-	const bumpScale = 2 * radius
-	const displacementScale = 0.05 * radius
-
 	const material = new MeshStandardMaterial({
 		map: colorTexture,
-		bumpMap: bumpTexture,
-		bumpScale,
-		displacementMap: bumpTexture,
-		displacementScale,
-		roughness: 0.7,
+		roughness: 0.6,
 		metalness: 0,
 	})
 
-	const moon = new Mesh(geometry, material)
+	const earth = new Mesh(geometry, material)
 
 	if (showAxis) {
 		const axisMaterial = new LineBasicMaterial({ color: 0xffffff })
@@ -46,8 +37,8 @@ export function createMoon({ radius = 1, segments = 256, showAxis = false }: Moo
 			new Vector3(0, radius * 1.33, 0),
 		])
 		const rotationAxis = new Line(axisGeometry, axisMaterial)
-		moon.add(rotationAxis)
+		earth.add(rotationAxis)
 	}
 
-	return moon
+	return earth
 }

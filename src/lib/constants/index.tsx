@@ -3,8 +3,23 @@ export const DRAG_SPEED_FACTOR = 0.002
 export const INERTIA_DAMPING = 0.95
 
 // moon auto-rotation
-export const AUTO_ROTATION_SPEED = -0.001 // negative = counterclockwise
-export const AUTO_ROTATION_ACCEL = 0.005
+export const MOON_ROTATION_SPEED = -0.001 // negative = counterclockwise
+export const MOON_ROTATION_ACCEL = 0.005
+
+// earth auto-rotation
+export const EARTH_ROTATION_SPEED = -0.001 // negative = counterclockwise
+export const EARTH_ROTATION_ACCEL = 0.005
+
+// clouds auto-rotation
+export const CLOUDS_ROTATION_SPEED = -0.0001 // negative = counterclockwise
+export const CLOUDS_ROTATION_ACCEL = 0.005
+
+// rotation multipliers
+export const GENERATION_MULTIPLIER = 1
+export const EARTH_ROT_MULTIPLIER = 1 * GENERATION_MULTIPLIER
+export const CLOUDS_ROT_MULTIPLIER = 1 * GENERATION_MULTIPLIER
+export const MOON_ORBIT_MULTIPLIER = 1 * GENERATION_MULTIPLIER
+export const MOON_SPIN_MULTIPLIER = 1 * GENERATION_MULTIPLIER
 
 // cursor
 export const CURSOR_HIDE_DELAY = 2000 // ms
