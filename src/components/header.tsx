@@ -3,6 +3,7 @@
 import { StoreProvider } from "@/providers/store"
 import { useIndexStore } from "@/stores"
 import { useEffect, useState } from "react"
+import { CustomSelect } from "./select"
 
 export function Header() {
 	return (
@@ -25,8 +26,8 @@ export function Component() {
 		setMounted(true)
 	}, [])
 
-	const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-		setSelected(e.target.value as "earth" | "moon")
+	const handleChange = (value: string | number) => {
+		setSelected(value as "earth" | "moon")
 	}
 
 	return (
@@ -35,14 +36,23 @@ export function Component() {
 
 			<div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">(moon)</div>
 
-			<select value={selected} onChange={handleChange} className="pr-1">
+			{/* <select value={selected} onChange={handleChange} className="pr-1">
 				<option value="moon" className="bg-black">
 					moon
 				</option>
 				<option value="earth" className="bg-black">
 					earth
 				</option>
-			</select>
+			</select> */}
+
+			<CustomSelect
+				options={[
+					{ label: "Earth", value: "earth" },
+					{ label: "Moon", value: "moon" },
+				]}
+				value={selected}
+				onChange={handleChange}
+			/>
 		</header>
 	)
 }
