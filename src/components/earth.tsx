@@ -15,7 +15,8 @@ export function Earth({ world }: Props) {
 	if (!world) return null
 
 	const {
-		moon: { moonDistance, moonOrbitSpeed },
+		radiusMultiplier,
+		moon: { moonDistance, moonDistanceMultiplier, moonOrbitSpeed },
 	} = useIndexStore((state) => state)
 
 	const earth = useEarth()
@@ -31,7 +32,7 @@ export function Earth({ world }: Props) {
 		// moon pivot for orbit
 		const moonPivot = new Object3D()
 		moonPivot.rotation.x = MathUtils.degToRad(5)
-		moon.position.set(moonDistance, 0, 0)
+		moon.position.set(moonDistance * moonDistanceMultiplier, 0, 0)
 		moonPivot.add(moon)
 		world.add(moonPivot)
 
@@ -47,7 +48,7 @@ export function Earth({ world }: Props) {
 			world.remove(moonPivot)
 			cancelAnimationFrame(animationId)
 		}
-	}, [world, earth, clouds, moon, moonDistance, moonOrbitSpeed])
+	}, [world, earth, clouds, moon, moonDistance, moonDistanceMultiplier, moonOrbitSpeed])
 
 	return null
 }
