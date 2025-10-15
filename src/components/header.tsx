@@ -41,8 +41,8 @@ export function Component() {
 				</SelectTrigger>
 
 				<SelectContent alignX="right" alignY="bottom">
-					<SelectItem value="earth">earth</SelectItem>
 					<SelectItem value="moon">moon</SelectItem>
+					<SelectItem value="earth">earth</SelectItem>
 				</SelectContent>
 			</Select>
 		</header>

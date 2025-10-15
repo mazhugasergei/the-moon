@@ -15,7 +15,7 @@ export function Earth({ world }: Props) {
 	if (!world) return null
 
 	const {
-		radiusMultiplier,
+		speedMultiplier,
 		moon: { moonDistance, moonDistanceMultiplier, moonOrbitSpeed },
 	} = useIndexStore((state) => state)
 
@@ -39,7 +39,7 @@ export function Earth({ world }: Props) {
 		let animationId: number
 		const animate = () => {
 			animationId = requestAnimationFrame(animate)
-			moonPivot.rotateY(moonOrbitSpeed) // orbit around earth
+			moonPivot.rotateY(moonOrbitSpeed * speedMultiplier) // orbit around earth
 		}
 		animate()
 
@@ -48,7 +48,7 @@ export function Earth({ world }: Props) {
 			world.remove(moonPivot)
 			cancelAnimationFrame(animationId)
 		}
-	}, [world, earth, clouds, moon, moonDistance, moonDistanceMultiplier, moonOrbitSpeed])
+	}, [world, earth, clouds, moon, moonDistance, moonDistanceMultiplier, moonOrbitSpeed, speedMultiplier])
 
 	return null
 }

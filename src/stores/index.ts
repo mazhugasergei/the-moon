@@ -22,7 +22,6 @@ type State = {
 		moonRadius: number
 		moonRotationSpeed: number
 		moonRotationAccel: number
-		moonOrbitPeriod: number
 		moonOrbitSpeed: number
 	}
 	earth: {
@@ -79,8 +78,7 @@ const defaultState: State = {
 		moonRadius: 1737.4,
 		moonRotationSpeed: (2 * Math.PI) / 2_359_200,
 		moonRotationAccel: 0.005,
-		moonOrbitPeriod: 2_359_200,
-		moonOrbitSpeed: 0,
+		moonOrbitSpeed: (2 * Math.PI) / 2_359_200,
 	},
 	earth: {
 		earthRadius: 6378,
@@ -88,8 +86,8 @@ const defaultState: State = {
 		earthRotationAccel: 0.005,
 	},
 	clouds: {
-		cloudsRadius: 6378 * 1.0001,
-		cloudsRotationSpeed: -0.00001,
+		cloudsRadius: 6379,
+		cloudsRotationSpeed: 0.00001,
 		cloudsRotationAccel: 0.005,
 	},
 	cursor: {
@@ -113,10 +111,6 @@ const defaultState: State = {
 	updateConfig: () => {},
 	resetConfig: () => {},
 }
-
-// pre-calculate speeds
-defaultState.moon.moonOrbitSpeed = ((2 * Math.PI) / defaultState.moon.moonOrbitPeriod) * defaultState.speedMultiplier
-defaultState.clouds.cloudsRotationSpeed = -0.00001 * defaultState.speedMultiplier
 
 export const useIndexStore = create<State>((set, get) => ({
 	...defaultState,

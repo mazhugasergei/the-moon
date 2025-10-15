@@ -15,6 +15,7 @@ export function useClouds(config?: CloudsConfig) {
 
 	const {
 		radiusMultiplier,
+		speedMultiplier,
 		clouds: { cloudsRadius, cloudsRotationSpeed, cloudsRotationAccel },
 	} = useIndexStore((state) => state)
 
@@ -41,8 +42,8 @@ export function useClouds(config?: CloudsConfig) {
 		let rotationSpeed = 0
 		const animate = () => {
 			requestAnimationFrame(animate)
-			rotationSpeed += (cloudsRotationSpeed - rotationSpeed) * cloudsRotationAccel
-			cloudMesh.rotateY(-rotationSpeed)
+			rotationSpeed += (cloudsRotationSpeed * speedMultiplier - rotationSpeed) * cloudsRotationAccel
+			cloudMesh.rotateY(rotationSpeed)
 		}
 		animate()
 
@@ -51,7 +52,7 @@ export function useClouds(config?: CloudsConfig) {
 		return () => {
 			setClouds(null)
 		}
-	}, [radiusMultiplier, cloudsRadius, config?.radiusMultiplier, config?.segments])
+	}, [radiusMultiplier, speedMultiplier, cloudsRadius, config?.radiusMultiplier, config?.segments])
 
 	return clouds
 }

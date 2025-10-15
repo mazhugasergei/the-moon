@@ -9,7 +9,7 @@ import { Slider } from "./slider"
 
 export function Footer() {
 	const debug = useIndexStore((state) => state.debug)
-	const radiusMultiplier = useIndexStore((state) => state.radiusMultiplier)
+	const { radiusMultiplier, speedMultiplier } = useIndexStore((state) => state)
 	const updateConfig = useIndexStore((state) => state.updateConfig)
 	const resetConfig = useIndexStore((state) => state.resetConfig)
 
@@ -38,6 +38,16 @@ export function Footer() {
 							max={0.001}
 							step={0.00001}
 							onChange={(v) => updateConfig({ radiusMultiplier: v })}
+						/>
+					</DropdownItem>
+					<DropdownItem>
+						<Slider
+							label="Speed Multiplier"
+							value={speedMultiplier}
+							min={0}
+							max={10000}
+							step={10}
+							onChange={(v) => updateConfig({ speedMultiplier: v })}
 						/>
 					</DropdownItem>
 					<DropdownItem>
