@@ -1,0 +1,1 @@
+type SelectedObject = "earth" | "moon"

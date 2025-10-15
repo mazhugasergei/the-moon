@@ -3,20 +3,36 @@
 :root {
 	--color-background: #000;
 	--color-foreground: #fff;
+	--color-primary: #fff;
+	--color-primary-foreground: #000;
+	--color-secondary: #000;
+	--color-secondary-foreground: #fff;
 	--color-muted: #888;
 	--color-muted-foreground: #ccc;
+	--color-accent: #222;
+	--color-accent-foreground: #fff;
+	--color-destructive: #ff0000;
+	--color-input: #0a0a0a;
 	--color-border: #333;
 }
 
 @theme {
 	--color-background: var(--color-background);
 	--color-foreground: var(--color-foreground);
+	--color-primary: var(--color-primary);
+	--color-primary-foreground: var(--color-primary-foreground);
+	--color-secondary: var(--color-secondary);
+	--color-secondary-foreground: var(--color-secondary-foreground);
 	--color-muted: var(--color-muted);
 	--color-muted-foreground: var(--color-muted-foreground);
+	--color-accent: var(--color-accent);
+	--color-accent-foreground: var(--color-accent-foreground);
+	--color-destructive: var(--color-destructive);
 	--color-border: var(--color-border);
 }
 
 * {
+	@apply text-sm;
 	border-color: var(--color-border);
 }
 

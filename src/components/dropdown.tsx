@@ -21,11 +21,14 @@ export function Dropdown({ children }: { children: ReactNode }) {
 	const ref = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
-		const handleClick = (e: MouseEvent) => {
-			if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+		const handleClickOutside = (e: MouseEvent) => {
+			if (ref.current && !ref.current.contains(e.target as Node)) {
+				setOpen(false)
+			}
 		}
-		document.addEventListener("mousedown", handleClick)
-		return () => document.removeEventListener("mousedown", handleClick)
+
+		document.addEventListener("mousedown", handleClickOutside)
+		return () => document.removeEventListener("mousedown", handleClickOutside)
 	}, [])
 
 	return (
@@ -37,12 +40,12 @@ export function Dropdown({ children }: { children: ReactNode }) {
 	)
 }
 
-export function DropdownTrigger({ children }: { children: ReactNode }) {
+export function DropdownTrigger({ children, className }: { children: ReactNode; className?: string }) {
 	const { setOpen, open } = useDropdown()
 	return (
 		<button
 			type="button"
-			className="flex w-full cursor-pointer items-center justify-between rounded text-left"
+			className={cn("flex w-full cursor-pointer items-center justify-between text-left", className)}
 			onClick={() => setOpen(!open)}
 		>
 			{children}
@@ -62,8 +65,9 @@ export function DropdownContent({ children, alignX = "right", alignY = "bottom" 
 
 	return (
 		<ul
+			onClick={(e) => e.stopPropagation()}
 			className={cn(
-				"bg-background absolute z-10 max-h-60 overflow-y-auto rounded border",
+				"bg-background absolute z-10 max-h-60 overflow-y-auto border",
 				alignX === "left" ? "left-0" : "right-0",
 				alignY === "top" ? "bottom-full mb-2" : "mt-3"
 			)}
@@ -73,22 +77,13 @@ export function DropdownContent({ children, alignX = "right", alignY = "bottom" 
 	)
 }
 
-export function DropdownItem({
-	children,
-	onSelect,
-	active,
-}: {
-	children: ReactNode
-	onSelect?: () => void
-	active?: boolean
-}) {
-	const { setOpen } = useDropdown()
+export function DropdownItem({ children, onSelect }: { children: ReactNode; onSelect?: () => void }) {
 	return (
 		<li
-			className="px-3 py-2 whitespace-nowrap"
-			onClick={() => {
+			className="p-3 whitespace-nowrap"
+			onClick={(e) => {
+				e.stopPropagation()
 				onSelect?.()
-				setOpen(false)
 			}}
 		>
 			{children}

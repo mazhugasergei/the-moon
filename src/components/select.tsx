@@ -52,7 +52,7 @@ export function SelectTrigger({ children }: { children: ReactNode }) {
 		<button
 			type="button"
 			onClick={() => setOpen(!open)}
-			className="flex w-full cursor-pointer items-center justify-between gap-1 rounded text-left"
+			className="flex w-full cursor-pointer items-center justify-between gap-1 text-left"
 		>
 			{children}
 			<ChevronDownIcon size={14} className={cn("transition-transform", open && "rotate-180")} />
@@ -73,7 +73,7 @@ export function SelectContent({ children, alignX = "right", alignY = "bottom" }:
 	return (
 		<ul
 			className={cn(
-				"bg-background absolute z-10 max-h-60 overflow-auto rounded border",
+				"bg-background absolute z-10 max-h-60 overflow-auto border",
 				alignX === "left" ? "left-0" : "right-0",
 				alignY === "top" ? "bottom-full mb-2" : "mt-3"
 			)}

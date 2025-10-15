@@ -28,12 +28,28 @@ export function Scene() {
 
 export function Component() {
 	const mountRef = useRef<HTMLDivElement>(null)
-	const selected = useIndexStore((state) => state.selected)
-
-	// persistent scene & world
 	const sceneRef = useRef<ThreeScene | null>(null)
 	const worldRef = useRef<Object3D | null>(null)
 	const sunRef = useRef<DirectionalLight | null>(null)
+	const cameraRef = useRef<PerspectiveCamera | null>(null)
+	const rendererRef = useRef<WebGLRenderer | null>(null)
+
+	const isDraggingRef = useRef(false)
+	const yawRef = useRef(0)
+	const pitchRef = useRef(0)
+	const inertiaRef = useRef(new Vector2(0, 0))
+	const targetZoomRef = useRef(5)
+	const lastMouseMoveRef = useRef(Date.now())
+	const lastTouchDistanceRef = useRef(0)
+
+	const {
+		selected,
+		rotation: { dragSpeedFactor, inertiaDamping },
+		zoom: { zoomMin, zoomMax, zoomSpeed },
+		cursor: { cursorHideDelay },
+		pitch: { pitchMin, pitchMax },
+		camera: { cameraFar, cameraFov, cameraNear },
+	} = useIndexStore((state) => state)
 
 	if (!sceneRef.current) {
 		sceneRef.current = new ThreeScene()
@@ -49,24 +65,20 @@ export function Component() {
 	const world = worldRef.current
 	const stars = useStarfield()
 
-	const {
-		rotation: { dragSpeedFactor, inertiaDamping },
-		zoom: { zoomMin, zoomMax, zoomSpeed },
-		cursor: { cursorHideDelay },
-		pitch: { pitchMin, pitchMax },
-		camera: { cameraFar, cameraFov, cameraNear },
-	} = useIndexStore((state) => state)
-
+	// add stars once
 	useEffect(() => {
 		if (stars && world && !world.children.includes(stars)) world.add(stars)
 	}, [stars, world])
 
+	// setup camera and renderer
 	useEffect(() => {
 		const mount = mountRef.current
 		if (!mount || !world) return
 
 		const camera = new PerspectiveCamera(cameraFov, mount.clientWidth / mount.clientHeight, cameraNear, cameraFar)
 		camera.position.z = 5
+		cameraRef.current = camera
+		targetZoomRef.current = camera.position.z
 
 		const renderer = new WebGLRenderer({ antialias: true })
 		renderer.setSize(mount.clientWidth, mount.clientHeight)
@@ -74,122 +86,146 @@ export function Component() {
 		renderer.shadowMap.enabled = true
 		renderer.shadowMap.type = 2
 		mount.appendChild(renderer.domElement)
-
-		let isDragging = false
-		let prevX = 0
-		let prevY = 0
-		let inertia = new Vector2(0, 0)
-		let yaw = 0
-		let pitch = 0
-		let targetZoom = camera.position.z
-		let lastMouseMove = Date.now()
-
-		const startDrag = (x: number, y: number) => {
-			isDragging = true
-			prevX = x
-			prevY = y
-			mount.style.cursor = "grabbing"
-			lastMouseMove = Date.now()
-		}
-		const moveDrag = (x: number, y: number) => {
-			const deltaX = x - prevX
-			const deltaY = y - prevY
-			if (isDragging) {
-				yaw += deltaX * dragSpeedFactor
-				pitch += deltaY * dragSpeedFactor
-				pitch = MathUtils.clamp(pitch, pitchMin, pitchMax)
-				inertia.set(deltaX * dragSpeedFactor, deltaY * dragSpeedFactor)
-				prevX = x
-				prevY = y
-			}
-			lastMouseMove = Date.now()
-		}
-		const endDrag = () => {
-			isDragging = false
-			mount.style.cursor = "grab"
-		}
-
-		// desktop events
-		mount.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
-		mount.addEventListener("mousemove", (e) => {
-			mount.style.cursor = isDragging ? "grabbing" : "grab"
-			moveDrag(e.clientX, e.clientY)
-		})
-		mount.addEventListener("mouseup", endDrag)
-		mount.addEventListener("wheel", (e) => {
-			targetZoom += e.deltaY * zoomSpeed
-			targetZoom = Math.max(zoomMin, Math.min(zoomMax, targetZoom))
-		})
-
-		// touch (mobile)
-		let lastTouchDistance = 0
-		mount.addEventListener("touchstart", (e) => {
-			if (e.touches.length === 1) {
-				startDrag(e.touches[0].clientX, e.touches[0].clientY)
-			} else if (e.touches.length === 2) {
-				isDragging = false
-				const dx = e.touches[0].clientX - e.touches[1].clientX
-				const dy = e.touches[0].clientY - e.touches[1].clientY
-				lastTouchDistance = Math.sqrt(dx * dx + dy * dy)
-			}
-		})
-		mount.addEventListener("touchmove", (e) => {
-			if (e.touches.length === 1) {
-				moveDrag(e.touches[0].clientX, e.touches[0].clientY)
-			} else if (e.touches.length === 2) {
-				const dx = e.touches[0].clientX - e.touches[1].clientX
-				const dy = e.touches[0].clientY - e.touches[1].clientY
-				const distance = Math.sqrt(dx * dx + dy * dy)
-				const delta = lastTouchDistance - distance
-				targetZoom += delta * zoomSpeed * 1.5
-				targetZoom = Math.max(zoomMin, Math.min(zoomMax, targetZoom))
-				lastTouchDistance = distance
-			}
-		})
-		mount.addEventListener("touchend", endDrag)
-
-		const handleResize = () => {
-			camera.aspect = mount.clientWidth / mount.clientHeight
-			camera.updateProjectionMatrix()
-			renderer.setSize(mount.clientWidth, mount.clientHeight)
-		}
-		window.addEventListener("resize", handleResize)
-
-		const animate = () => {
-			requestAnimationFrame(animate)
-			if (!isDragging) {
-				yaw += inertia.x
-				pitch += inertia.y
-				pitch = MathUtils.clamp(pitch, pitchMin, pitchMax)
-				inertia.multiplyScalar(inertiaDamping)
-			}
-			world.rotation.x = pitch
-			world.rotation.y = yaw
-			camera.position.z += (targetZoom - camera.position.z) * 0.03
-			if (Date.now() - lastMouseMove > cursorHideDelay) mount.style.cursor = "none"
-			renderer.render(scene, camera)
-		}
-		animate()
+		rendererRef.current = renderer
 
 		return () => {
 			mount.removeChild(renderer.domElement)
-			window.removeEventListener("resize", handleResize)
 		}
-	}, [
-		selected,
-		stars,
-		dragSpeedFactor,
-		inertiaDamping,
-		zoomMin,
-		zoomMax,
-		zoomSpeed,
-		cursorHideDelay,
-		pitchMin,
-		pitchMax,
-		cameraFov,
-		cameraNear,
-		cameraFar,
-	])
+	}, [cameraFov, cameraNear, cameraFar, world])
+
+	// handle mouse and touch
+	useEffect(() => {
+		const mount = mountRef.current
+		if (!mount) return
+
+		const startDrag = (x: number, y: number) => {
+			isDraggingRef.current = true
+			yawRef.current = yawRef.current
+			pitchRef.current = pitchRef.current
+			inertiaRef.current.set(0, 0)
+			lastMouseMoveRef.current = Date.now()
+			mount.style.cursor = "grabbing"
+			lastTouchDistanceRef.current = 0
+			prevXRef.current = x
+			prevYRef.current = y
+		}
+
+		const moveDrag = (x: number, y: number) => {
+			const deltaX = x - prevXRef.current
+			const deltaY = y - prevYRef.current
+			if (isDraggingRef.current) {
+				yawRef.current += deltaX * dragSpeedFactor
+				pitchRef.current = MathUtils.clamp(pitchRef.current + deltaY * dragSpeedFactor, pitchMin, pitchMax)
+				inertiaRef.current.set(deltaX * dragSpeedFactor, deltaY * dragSpeedFactor)
+				prevXRef.current = x
+				prevYRef.current = y
+			}
+			lastMouseMoveRef.current = Date.now()
+		}
+
+		const endDrag = () => {
+			isDraggingRef.current = false
+			mount.style.cursor = "grab"
+		}
+
+		const prevXRef = { current: 0 }
+		const prevYRef = { current: 0 }
+
+		const handleWheel = (e: WheelEvent) => {
+			targetZoomRef.current += e.deltaY * zoomSpeed
+			targetZoomRef.current = Math.max(zoomMin, Math.min(zoomMax, targetZoomRef.current))
+		}
+
+		const handleMouseMove = (e: MouseEvent) => {
+			if (!isDraggingRef.current) mount.style.cursor = "grab"
+			moveDrag(e.clientX, e.clientY)
+		}
+
+		const handleTouchStart = (e: TouchEvent) => {
+			if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY)
+			else if (e.touches.length === 2) {
+				isDraggingRef.current = false
+				const dx = e.touches[0].clientX - e.touches[1].clientX
+				const dy = e.touches[0].clientY - e.touches[1].clientY
+				lastTouchDistanceRef.current = Math.sqrt(dx * dx + dy * dy)
+			}
+		}
+
+		const handleTouchMove = (e: TouchEvent) => {
+			if (e.touches.length === 1) moveDrag(e.touches[0].clientX, e.touches[0].clientY)
+			else if (e.touches.length === 2 && cameraRef.current) {
+				const dx = e.touches[0].clientX - e.touches[1].clientX
+				const dy = e.touches[0].clientY - e.touches[1].clientY
+				const distance = Math.sqrt(dx * dx + dy * dy)
+				const delta = lastTouchDistanceRef.current - distance
+				targetZoomRef.current += delta * zoomSpeed * 1.5
+				targetZoomRef.current = Math.max(zoomMin, Math.min(zoomMax, targetZoomRef.current))
+				lastTouchDistanceRef.current = distance
+			}
+		}
+
+		mount.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
+		mount.addEventListener("mousemove", handleMouseMove)
+		mount.addEventListener("mouseup", endDrag)
+		mount.addEventListener("wheel", handleWheel)
+
+		mount.addEventListener("touchstart", handleTouchStart)
+		mount.addEventListener("touchmove", handleTouchMove)
+		mount.addEventListener("touchend", endDrag)
+
+		return () => {
+			mount.removeEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
+			mount.removeEventListener("mousemove", handleMouseMove)
+			mount.removeEventListener("mouseup", endDrag)
+			mount.removeEventListener("wheel", handleWheel)
+
+			mount.removeEventListener("touchstart", handleTouchStart)
+			mount.removeEventListener("touchmove", handleTouchMove)
+			mount.removeEventListener("touchend", endDrag)
+		}
+	}, [dragSpeedFactor, inertiaDamping, zoomMin, zoomMax, zoomSpeed, pitchMin, pitchMax, cursorHideDelay])
+
+	// handle resize
+	useEffect(() => {
+		const handleResize = () => {
+			if (!mountRef.current || !cameraRef.current || !rendererRef.current) return
+			cameraRef.current.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight
+			cameraRef.current.updateProjectionMatrix()
+			rendererRef.current.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight)
+		}
+		window.addEventListener("resize", handleResize)
+		return () => window.removeEventListener("resize", handleResize)
+	}, [])
+
+	// animation loop
+	useEffect(() => {
+		let animationId: number
+		const animate = () => {
+			animationId = requestAnimationFrame(animate)
+			if (!cameraRef.current || !rendererRef.current || !world) return
+
+			// apply inertia if not dragging
+			if (!isDraggingRef.current) {
+				yawRef.current += inertiaRef.current.x
+				pitchRef.current = MathUtils.clamp(pitchRef.current + inertiaRef.current.y, pitchMin, pitchMax)
+				inertiaRef.current.multiplyScalar(inertiaDamping)
+			}
+
+			world.rotation.x = pitchRef.current
+			world.rotation.y = yawRef.current
+
+			// smooth zoom
+			cameraRef.current.position.z += (targetZoomRef.current - cameraRef.current.position.z) * 0.03
+
+			// hide cursor if idle
+			if (mountRef.current && Date.now() - lastMouseMoveRef.current > cursorHideDelay)
+				mountRef.current.style.cursor = "none"
+
+			rendererRef.current.render(scene, cameraRef.current)
+		}
+		animate()
+		return () => cancelAnimationFrame(animationId)
+	}, [world, cursorHideDelay, inertiaDamping, pitchMin, pitchMax])
 
 	return (
 		<div ref={mountRef} className="h-full w-full cursor-grab touch-none">

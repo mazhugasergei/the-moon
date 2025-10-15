@@ -17,6 +17,7 @@ export function useMoon(config?: Config) {
 	const [moon, setMoon] = useState<Mesh | null>(null)
 
 	const {
+		radiusMultiplier,
 		moon: { moonRadius, moonRotationSpeed, moonRotationAccel },
 	} = useIndexStore((state) => state)
 
@@ -26,7 +27,7 @@ export function useMoon(config?: Config) {
 		const bumpTexture = loader.load(ldem_3_8bit.src)
 
 		const geometry = new SphereGeometry(
-			moonRadius * (config?.radiusMultiplier || 1),
+			moonRadius * (config?.radiusMultiplier || 1) * radiusMultiplier,
 			config?.segments || 256,
 			config?.segments || 256
 		)
@@ -34,9 +35,9 @@ export function useMoon(config?: Config) {
 		const material = new MeshStandardMaterial({
 			map: colorTexture,
 			bumpMap: bumpTexture,
-			bumpScale: 2 * moonRadius,
+			bumpScale: 2 * moonRadius * radiusMultiplier,
 			displacementMap: bumpTexture,
-			displacementScale: 0.05 * moonRadius,
+			displacementScale: 0.05 * moonRadius * radiusMultiplier,
 			roughness: 0.7,
 			metalness: 0,
 		})
@@ -65,7 +66,7 @@ export function useMoon(config?: Config) {
 		return () => {
 			setMoon(null)
 		}
-	}, [moonRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
+	}, [radiusMultiplier, moonRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
 
 	return moon
 }

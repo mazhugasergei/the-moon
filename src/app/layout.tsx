@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function RootLayout(props: LayoutProps<"/">) {
 	return (
 		<html lang="en">
-			<body className="text-xs">
+			<body>
 				<Header />
 				{props.children}
 				<Footer />
