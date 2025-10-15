@@ -8,10 +8,12 @@ import { useEffect } from "react"
 import { MathUtils, Object3D } from "three"
 
 interface Props {
-	world: Object3D
+	world: Object3D | null
 }
 
 export function Earth({ world }: Props) {
+	if (!world) return null
+
 	const {
 		moon: { moonDistance, moonOrbitSpeed },
 	} = useIndexStore((state) => state)

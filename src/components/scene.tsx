@@ -30,7 +30,23 @@ export function Component() {
 	const mountRef = useRef<HTMLDivElement>(null)
 	const selected = useIndexStore((state) => state.selected)
 
-	const world = new Object3D()
+	// persistent scene & world
+	const sceneRef = useRef<ThreeScene | null>(null)
+	const worldRef = useRef<Object3D | null>(null)
+	const sunRef = useRef<DirectionalLight | null>(null)
+
+	if (!sceneRef.current) {
+		sceneRef.current = new ThreeScene()
+		worldRef.current = new Object3D()
+
+		sunRef.current = new DirectionalLight(0xffffff, 1.5)
+		sunRef.current.position.set(10, 10, 10)
+		worldRef.current.add(sunRef.current)
+		sceneRef.current.add(worldRef.current)
+	}
+
+	const scene = sceneRef.current
+	const world = worldRef.current
 	const stars = useStarfield()
 
 	const {
@@ -42,14 +58,13 @@ export function Component() {
 	} = useIndexStore((state) => state)
 
 	useEffect(() => {
-		if (stars) world.add(stars)
-	}, [stars])
+		if (stars && world && !world.children.includes(stars)) world.add(stars)
+	}, [stars, world])
 
 	useEffect(() => {
 		const mount = mountRef.current
-		if (!mount) return
+		if (!mount || !world) return
 
-		const scene = new ThreeScene()
 		const camera = new PerspectiveCamera(cameraFov, mount.clientWidth / mount.clientHeight, cameraNear, cameraFar)
 		camera.position.z = 5
 
@@ -59,11 +74,6 @@ export function Component() {
 		renderer.shadowMap.enabled = true
 		renderer.shadowMap.type = 2
 		mount.appendChild(renderer.domElement)
-
-		const sun = new DirectionalLight(0xffffff, 1.5)
-		sun.position.set(10, 10, 10)
-		world.add(sun)
-		scene.add(world)
 
 		let isDragging = false
 		let prevX = 0
@@ -99,16 +109,19 @@ export function Component() {
 			mount.style.cursor = "grab"
 		}
 
-		// desktop mouse events
+		// desktop events
 		mount.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
-		mount.addEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY))
+		mount.addEventListener("mousemove", (e) => {
+			mount.style.cursor = isDragging ? "grabbing" : "grab"
+			moveDrag(e.clientX, e.clientY)
+		})
 		mount.addEventListener("mouseup", endDrag)
 		mount.addEventListener("wheel", (e) => {
 			targetZoom += e.deltaY * zoomSpeed
 			targetZoom = Math.max(zoomMin, Math.min(zoomMax, targetZoom))
 		})
 
-		// touch events (mobile)
+		// touch (mobile)
 		let lastTouchDistance = 0
 		mount.addEventListener("touchstart", (e) => {
 			if (e.touches.length === 1) {
@@ -144,20 +157,16 @@ export function Component() {
 
 		const animate = () => {
 			requestAnimationFrame(animate)
-
 			if (!isDragging) {
 				yaw += inertia.x
 				pitch += inertia.y
 				pitch = MathUtils.clamp(pitch, pitchMin, pitchMax)
 				inertia.multiplyScalar(inertiaDamping)
 			}
-
 			world.rotation.x = pitch
 			world.rotation.y = yaw
 			camera.position.z += (targetZoom - camera.position.z) * 0.03
-
 			if (Date.now() - lastMouseMove > cursorHideDelay) mount.style.cursor = "none"
-
 			renderer.render(scene, camera)
 		}
 		animate()
