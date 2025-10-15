@@ -18,7 +18,7 @@ export function Earth({ world }: Props) {
 		moon: { moonDistance, moonOrbitSpeed },
 	} = useIndexStore((state) => state)
 
-	const earth = useEarth({ radiusMultiplier: 1 })
+	const earth = useEarth()
 	const clouds = useClouds()
 	const moon = useMoon({ segments: 64 })
 

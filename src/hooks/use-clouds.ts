@@ -14,6 +14,7 @@ export function useClouds(config?: CloudsConfig) {
 	const [clouds, setClouds] = useState<Mesh | null>(null)
 
 	const {
+		radiusMultiplier,
 		clouds: { cloudsRadius, cloudsRotationSpeed, cloudsRotationAccel },
 	} = useIndexStore((state) => state)
 
@@ -22,7 +23,7 @@ export function useClouds(config?: CloudsConfig) {
 		const cloudTexture = loader.load(earth_clouds.src)
 
 		const geometry = new SphereGeometry(
-			cloudsRadius * (config?.radiusMultiplier || 1),
+			cloudsRadius * (config?.radiusMultiplier || 1) * radiusMultiplier,
 			config?.segments || 256,
 			config?.segments || 256
 		)
@@ -50,7 +51,7 @@ export function useClouds(config?: CloudsConfig) {
 		return () => {
 			setClouds(null)
 		}
-	}, [cloudsRadius, config?.radiusMultiplier, config?.segments])
+	}, [radiusMultiplier, cloudsRadius, config?.radiusMultiplier, config?.segments])
 
 	return clouds
 }

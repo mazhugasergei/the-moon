@@ -18,6 +18,7 @@ export function useMoon(config?: Config) {
 
 	const {
 		radiusMultiplier,
+		speedMultiplier,
 		moon: { moonRadius, moonRotationSpeed, moonRotationAccel },
 	} = useIndexStore((state) => state)
 
@@ -50,8 +51,8 @@ export function useMoon(config?: Config) {
 		let rotationSpeed = 0
 		const animate = () => {
 			requestAnimationFrame(animate)
-			rotationSpeed += (moonRotationSpeed - rotationSpeed) * moonRotationAccel
-			moonMesh.rotateY(-rotationSpeed)
+			rotationSpeed += (moonRotationSpeed * speedMultiplier - rotationSpeed) * moonRotationAccel
+			moonMesh.rotateY(rotationSpeed)
 		}
 		animate()
 
@@ -66,7 +67,7 @@ export function useMoon(config?: Config) {
 		return () => {
 			setMoon(null)
 		}
-	}, [radiusMultiplier, moonRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
+	}, [radiusMultiplier, speedMultiplier, moonRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
 
 	return moon
 }
