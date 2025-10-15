@@ -31,7 +31,7 @@ export function Component() {
 	const selected = useIndexStore((state) => state.selected)
 
 	const world = new Object3D()
-	const stars = useStarfield({ color: 0xffddaa })
+	const stars = useStarfield()
 
 	// Pull all constants from store
 	const {
