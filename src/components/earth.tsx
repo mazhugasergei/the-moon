@@ -13,7 +13,7 @@ interface Props {
 
 export function Earth({ world }: Props) {
 	const {
-		moon: { moonDistance },
+		moon: { moonDistance, moonOrbitSpeed },
 	} = useIndexStore((state) => state)
 
 	const earth = useEarth({ radiusMultiplier: 1 })
@@ -33,11 +33,19 @@ export function Earth({ world }: Props) {
 		moonPivot.add(moon)
 		world.add(moonPivot)
 
+		let animationId: number
+		const animate = () => {
+			animationId = requestAnimationFrame(animate)
+			moonPivot.rotateY(moonOrbitSpeed) // orbit around earth
+		}
+		animate()
+
 		return () => {
 			world.remove(earth)
 			world.remove(moonPivot)
+			cancelAnimationFrame(animationId)
 		}
-	}, [world, earth, clouds, moon, moonDistance])
+	}, [world, earth, clouds, moon, moonDistance, moonOrbitSpeed])
 
 	return null
 }

@@ -6,7 +6,7 @@ const defaultState = {
 	selected: "moon" as "earth" | "moon",
 
 	radiusMultiplier: 0.00015,
-	speedMultiplier: 10000,
+	speedMultiplier: 100,
 
 	starfield: {
 		starCount: 1000,
