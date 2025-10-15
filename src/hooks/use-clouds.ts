@@ -14,7 +14,7 @@ export function useClouds(config?: CloudsConfig) {
 	const [clouds, setClouds] = useState<Mesh | null>(null)
 
 	const {
-		clouds: { cloudsRadius },
+		clouds: { cloudsRadius, cloudsRotationSpeed, cloudsRotationAccel },
 	} = useIndexStore((state) => state)
 
 	useEffect(() => {
@@ -35,6 +35,16 @@ export function useClouds(config?: CloudsConfig) {
 		})
 
 		const cloudMesh = new Mesh(geometry, material)
+
+		// rotation
+		let rotationSpeed = 0
+		const animate = () => {
+			requestAnimationFrame(animate)
+			rotationSpeed += (cloudsRotationSpeed - rotationSpeed) * cloudsRotationAccel
+			cloudMesh.rotateY(-rotationSpeed)
+		}
+		animate()
+
 		setClouds(cloudMesh)
 
 		return () => {
