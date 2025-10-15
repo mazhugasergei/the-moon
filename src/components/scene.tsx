@@ -99,7 +99,7 @@ export function Component() {
 			mount.style.cursor = "grab"
 		}
 
-		// Desktop mouse events
+		// desktop mouse events
 		mount.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
 		mount.addEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY))
 		mount.addEventListener("mouseup", endDrag)
@@ -108,7 +108,7 @@ export function Component() {
 			targetZoom = Math.max(zoomMin, Math.min(zoomMax, targetZoom))
 		})
 
-		// Touch events (mobile)
+		// touch events (mobile)
 		let lastTouchDistance = 0
 		mount.addEventListener("touchstart", (e) => {
 			if (e.touches.length === 1) {
@@ -183,7 +183,7 @@ export function Component() {
 	])
 
 	return (
-		<div ref={mountRef} className="h-full w-full touch-none">
+		<div ref={mountRef} className="h-full w-full cursor-grab touch-none">
 			{selected === "moon" ? <Moon world={world} /> : <Earth world={world} />}
 			<Debug />
 		</div>
