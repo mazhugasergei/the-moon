@@ -37,8 +37,8 @@ export function Component() {
 
 			<CustomSelect
 				options={[
-					{ label: "Earth", value: "earth" },
-					{ label: "Moon", value: "moon" },
+					{ label: "earth", value: "earth" },
+					{ label: "moon", value: "moon" },
 				]}
 				value={selected}
 				onChange={handleChange}
