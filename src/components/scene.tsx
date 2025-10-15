@@ -33,7 +33,6 @@ export function Component() {
 	const world = new Object3D()
 	const stars = useStarfield()
 
-	// Pull all constants from store
 	const {
 		rotation: { dragSpeedFactor, inertiaDamping },
 		zoom: { zoomMin, zoomMax, zoomSpeed },
@@ -50,7 +49,6 @@ export function Component() {
 		const mount = mountRef.current
 		if (!mount) return
 
-		// Scene setup
 		const scene = new ThreeScene()
 		const camera = new PerspectiveCamera(cameraFov, mount.clientWidth / mount.clientHeight, cameraNear, cameraFar)
 		camera.position.z = 5
@@ -62,13 +60,11 @@ export function Component() {
 		renderer.shadowMap.type = 2
 		mount.appendChild(renderer.domElement)
 
-		// World container
 		const sun = new DirectionalLight(0xffffff, 1.5)
 		sun.position.set(10, 10, 10)
 		world.add(sun)
 		scene.add(world)
 
-		// Interaction & camera logic
 		let isDragging = false
 		let prevX = 0
 		let prevY = 0
@@ -96,7 +92,6 @@ export function Component() {
 				prevX = x
 				prevY = y
 			}
-			mount.style.cursor = isDragging ? "grabbing" : "grab"
 			lastMouseMove = Date.now()
 		}
 		const endDrag = () => {
@@ -104,15 +99,41 @@ export function Component() {
 			mount.style.cursor = "grab"
 		}
 
+		// Desktop mouse events
 		mount.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
 		mount.addEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY))
 		mount.addEventListener("mouseup", endDrag)
-
-		const handleWheel = (e: WheelEvent) => {
+		mount.addEventListener("wheel", (e) => {
 			targetZoom += e.deltaY * zoomSpeed
 			targetZoom = Math.max(zoomMin, Math.min(zoomMax, targetZoom))
-		}
-		mount.addEventListener("wheel", handleWheel)
+		})
+
+		// Touch events (mobile)
+		let lastTouchDistance = 0
+		mount.addEventListener("touchstart", (e) => {
+			if (e.touches.length === 1) {
+				startDrag(e.touches[0].clientX, e.touches[0].clientY)
+			} else if (e.touches.length === 2) {
+				isDragging = false
+				const dx = e.touches[0].clientX - e.touches[1].clientX
+				const dy = e.touches[0].clientY - e.touches[1].clientY
+				lastTouchDistance = Math.sqrt(dx * dx + dy * dy)
+			}
+		})
+		mount.addEventListener("touchmove", (e) => {
+			if (e.touches.length === 1) {
+				moveDrag(e.touches[0].clientX, e.touches[0].clientY)
+			} else if (e.touches.length === 2) {
+				const dx = e.touches[0].clientX - e.touches[1].clientX
+				const dy = e.touches[0].clientY - e.touches[1].clientY
+				const distance = Math.sqrt(dx * dx + dy * dy)
+				const delta = lastTouchDistance - distance
+				targetZoom += delta * zoomSpeed * 1.5
+				targetZoom = Math.max(zoomMin, Math.min(zoomMax, targetZoom))
+				lastTouchDistance = distance
+			}
+		})
+		mount.addEventListener("touchend", endDrag)
 
 		const handleResize = () => {
 			camera.aspect = mount.clientWidth / mount.clientHeight
@@ -124,7 +145,6 @@ export function Component() {
 		const animate = () => {
 			requestAnimationFrame(animate)
 
-			// world rotation & inertia
 			if (!isDragging) {
 				yaw += inertia.x
 				pitch += inertia.y
@@ -144,10 +164,6 @@ export function Component() {
 
 		return () => {
 			mount.removeChild(renderer.domElement)
-			mount.removeEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY))
-			mount.removeEventListener("mousemove", (e) => moveDrag(e.clientX, e.clientY))
-			mount.removeEventListener("mouseup", endDrag)
-			mount.removeEventListener("wheel", handleWheel)
 			window.removeEventListener("resize", handleResize)
 		}
 	}, [
