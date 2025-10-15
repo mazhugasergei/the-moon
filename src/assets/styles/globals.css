@@ -1,7 +1,27 @@
 @import "tailwindcss";
 
+:root {
+	--color-background: #000;
+	--color-foreground: #fff;
+	--color-muted: #888;
+	--color-muted-foreground: #ccc;
+	--color-border: #333;
+}
+
+@theme {
+	--color-background: var(--color-background);
+	--color-foreground: var(--color-foreground);
+	--color-muted: var(--color-muted);
+	--color-muted-foreground: var(--color-muted-foreground);
+	--color-border: var(--color-border);
+}
+
+* {
+	border-color: var(--color-border);
+}
+
 body {
-	background-color: #000;
-	color: #fff;
+	background-color: var(--color-background);
+	color: var(--color-foreground);
 	font-family: monospace;
 }

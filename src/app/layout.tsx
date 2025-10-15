@@ -1,4 +1,5 @@
 import "@/assets/styles/globals.css"
+import { Footer } from "@/components/footer"
 import { Header } from "@/components/header"
 import type { Metadata } from "next"
 
@@ -9,9 +10,10 @@ export const metadata: Metadata = {
 export default function RootLayout(props: LayoutProps<"/">) {
 	return (
 		<html lang="en">
-			<body>
+			<body className="text-xs">
 				<Header />
 				{props.children}
+				<Footer />
 			</body>
 		</html>
 	)
