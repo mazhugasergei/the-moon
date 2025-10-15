@@ -1,10 +1,10 @@
 "use client"
 
-import { createIndexStore, useIndexStore } from "@/stores"
+import { useIndexStore } from "@/stores"
 import { createContext, useContext } from "react"
 import { StoreApi, useStore } from "zustand"
 
-type IndexStore = ReturnType<typeof createIndexStore>
+type IndexStore = typeof useIndexStore
 
 const IndexStoreContext = createContext<IndexStore | null>(null)
 
