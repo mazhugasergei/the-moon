@@ -54,7 +54,7 @@ type State = {
 
 const defaultState: State = {
 	debug: false,
-	selected: "earth",
+	selected: "moon",
 	radiusMultiplier: 0.0005,
 	speedMultiplier: 10000,
 	starfield: {
