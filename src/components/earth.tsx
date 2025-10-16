@@ -4,7 +4,7 @@ import { useClouds } from "@/hooks/use-clouds"
 import { useEarth } from "@/hooks/use-earth"
 import { useMoon } from "@/hooks/use-moon"
 import { useIndexStore } from "@/stores"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { MathUtils, Object3D } from "three"
 
 interface Props {
@@ -19,36 +19,52 @@ export function Earth({ world }: Props) {
 		moon: { moonDistance, moonDistanceMultiplier, moonOrbitSpeed },
 	} = useIndexStore((state) => state)
 
-	const earth = useEarth()
-	const clouds = useClouds()
-	const moon = useMoon({ segments: 64 })
+	const radiusMultiplier = 0.3
+	const earth = useEarth({ radiusMultiplier })
+	const clouds = useClouds({ radiusMultiplier })
+	const moon = useMoon({ segments: 64, radiusMultiplier })
 
+	// store moon pivot persistently (not recreated each render)
+	const moonPivotRef = useRef<Object3D | null>(null)
+
+	// create earth and moon once
 	useEffect(() => {
-		if (!earth || !clouds || !moon) return
+		if (!world || !earth || !clouds || !moon) return
 
+		// add clouds to earth
 		earth.add(clouds)
 		world.add(earth)
 
-		// moon pivot for orbit
+		// moon orbit pivot
 		const moonPivot = new Object3D()
 		moonPivot.rotation.x = MathUtils.degToRad(5)
 		moon.position.set(moonDistance * moonDistanceMultiplier, 0, 0)
 		moonPivot.add(moon)
 		world.add(moonPivot)
 
-		let animationId: number
-		const animate = () => {
-			animationId = requestAnimationFrame(animate)
-			moonPivot.rotateY(moonOrbitSpeed * speedMultiplier) // orbit around earth
-		}
-		animate()
+		moonPivotRef.current = moonPivot
 
 		return () => {
 			world.remove(earth)
 			world.remove(moonPivot)
-			cancelAnimationFrame(animationId)
+			moonPivotRef.current = null
 		}
-	}, [world, earth, clouds, moon, moonDistance, moonDistanceMultiplier, moonOrbitSpeed, speedMultiplier])
+	}, [world, earth, clouds, moon, moonDistance, moonDistanceMultiplier])
+
+	// handle orbit rotation
+	useEffect(() => {
+		const moonPivot = moonPivotRef.current
+		if (!moonPivot) return
+
+		let frameId: number
+		const animate = () => {
+			frameId = requestAnimationFrame(animate)
+			moonPivot.rotateY(moonOrbitSpeed * speedMultiplier)
+		}
+		animate()
+
+		return () => cancelAnimationFrame(frameId)
+	}, [moonOrbitSpeed, speedMultiplier])
 
 	return null
 }

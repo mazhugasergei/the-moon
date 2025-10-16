@@ -18,18 +18,15 @@ export function useEarth(config?: EarthConfig) {
 	const {
 		radiusMultiplier,
 		speedMultiplier,
-		earth: { earthRadius, earthRotationSpeed, earthRotationAccel },
+		earth: { earthRadius, earthRotationSpeed },
 	} = useIndexStore((state) => state)
 
+	// create earth once
 	useEffect(() => {
 		const loader = new TextureLoader()
 		const colorTexture = loader.load(earth_winter_5400x2700.src)
 
-		const geometry = new SphereGeometry(
-			earthRadius * (config?.radiusMultiplier || 1) * radiusMultiplier,
-			config?.segments || 256,
-			config?.segments || 256
-		)
+		const geometry = new SphereGeometry(earthRadius, config?.segments || 256, config?.segments || 256)
 
 		const material = new MeshStandardMaterial({
 			map: colorTexture,
@@ -41,19 +38,9 @@ export function useEarth(config?: EarthConfig) {
 		earthMesh.castShadow = true
 		earthMesh.receiveShadow = true
 
-		// rotation
-		let rotationSpeed = 0
-		const animate = () => {
-			requestAnimationFrame(animate)
-			rotationSpeed += (earthRotationSpeed * speedMultiplier - rotationSpeed) * earthRotationAccel
-			earthMesh.rotateY(rotationSpeed)
-		}
-		animate()
-
-		// axis
 		if (config?.showAxis) {
 			const rotationAxis = createAxis({
-				length: earthRadius * (config?.radiusMultiplier || 1) * 1.33,
+				length: earthRadius * 1.33,
 			})
 			earthMesh.add(rotationAxis)
 		}
@@ -61,9 +48,34 @@ export function useEarth(config?: EarthConfig) {
 		setEarth(earthMesh)
 
 		return () => {
+			geometry.dispose()
+			material.dispose()
 			setEarth(null)
 		}
-	}, [radiusMultiplier, speedMultiplier, earthRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
+	}, [earthRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
+
+	// rotation
+	useEffect(() => {
+		if (!earth) return
+
+		let frameId: number
+		const rotationSpeed = earthRotationSpeed * speedMultiplier
+
+		const animate = () => {
+			frameId = requestAnimationFrame(animate)
+			earth.rotateY(rotationSpeed)
+		}
+		animate()
+
+		return () => cancelAnimationFrame(frameId)
+	}, [earth, earthRotationSpeed, speedMultiplier])
+
+	// dynamic scaling
+	useEffect(() => {
+		if (!earth) return
+		const scale = radiusMultiplier * (config?.radiusMultiplier || 1)
+		earth.scale.set(scale, scale, scale)
+	}, [earth, radiusMultiplier, config?.radiusMultiplier])
 
 	return earth
 }

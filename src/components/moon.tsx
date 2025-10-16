@@ -11,7 +11,7 @@ interface Props {
 export function Moon({ world }: Props) {
 	if (!world) return null
 
-	const moon = useMoon({ radiusMultiplier: 3 })
+	const moon = useMoon()
 
 	useEffect(() => {
 		if (!moon) return

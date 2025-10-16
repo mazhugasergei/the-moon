@@ -67,7 +67,7 @@ export function DropdownContent({ children, alignX = "right", alignY = "bottom" 
 		<ul
 			onClick={(e) => e.stopPropagation()}
 			className={cn(
-				"bg-background absolute z-10 max-h-60 overflow-y-auto border",
+				"bg-background absolute z-10 max-h-[50vh] overflow-y-auto border",
 				alignX === "left" ? "left-0" : "right-0",
 				alignY === "top" ? "bottom-full mb-2" : "mt-3"
 			)}

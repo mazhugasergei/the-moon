@@ -44,8 +44,8 @@ export function Footer() {
 						<Slider
 							label="Speed Multiplier"
 							value={speedMultiplier}
-							min={0}
-							max={10000}
+							min={1}
+							max={10001}
 							step={10}
 							onChange={(v) => updateConfig({ speedMultiplier: v })}
 						/>

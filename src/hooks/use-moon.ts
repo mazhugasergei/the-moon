@@ -19,26 +19,23 @@ export function useMoon(config?: Config) {
 	const {
 		radiusMultiplier,
 		speedMultiplier,
-		moon: { moonRadius, moonRotationSpeed, moonRotationAccel },
+		moon: { moonRadius, moonRotationSpeed },
 	} = useIndexStore((state) => state)
 
+	// create moon once
 	useEffect(() => {
 		const loader = new TextureLoader()
 		const colorTexture = loader.load(lroc_color_poles_1k.src)
 		const bumpTexture = loader.load(ldem_3_8bit.src)
 
-		const geometry = new SphereGeometry(
-			moonRadius * (config?.radiusMultiplier || 1) * radiusMultiplier,
-			config?.segments || 256,
-			config?.segments || 256
-		)
+		const geometry = new SphereGeometry(moonRadius, config?.segments || 256, config?.segments || 256)
 
 		const material = new MeshStandardMaterial({
 			map: colorTexture,
 			bumpMap: bumpTexture,
-			bumpScale: 2 * moonRadius * radiusMultiplier,
+			bumpScale: 2,
 			displacementMap: bumpTexture,
-			displacementScale: 0.05 * moonRadius * radiusMultiplier,
+			displacementScale: 0.05,
 			roughness: 0.7,
 			metalness: 0,
 		})
@@ -47,16 +44,6 @@ export function useMoon(config?: Config) {
 		moonMesh.castShadow = true
 		moonMesh.receiveShadow = true
 
-		// rotation
-		let rotationSpeed = 0
-		const animate = () => {
-			requestAnimationFrame(animate)
-			rotationSpeed += (moonRotationSpeed * speedMultiplier - rotationSpeed) * moonRotationAccel
-			moonMesh.rotateY(rotationSpeed)
-		}
-		animate()
-
-		// axis
 		if (config?.showAxis) {
 			const rotationAxis = createAxis({ length: moonRadius * 1.33 })
 			moonMesh.add(rotationAxis)
@@ -65,9 +52,34 @@ export function useMoon(config?: Config) {
 		setMoon(moonMesh)
 
 		return () => {
+			geometry.dispose()
+			material.dispose()
 			setMoon(null)
 		}
-	}, [radiusMultiplier, speedMultiplier, moonRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
+	}, [moonRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
+
+	// handle rotation
+	useEffect(() => {
+		if (!moon) return
+
+		let frameId: number
+		const rotationSpeed = moonRotationSpeed * speedMultiplier
+
+		const animate = () => {
+			frameId = requestAnimationFrame(animate)
+			moon.rotateY(rotationSpeed)
+		}
+		animate()
+
+		return () => cancelAnimationFrame(frameId)
+	}, [moon, moonRotationSpeed, speedMultiplier])
+
+	// handle dynamic scaling
+	useEffect(() => {
+		if (!moon) return
+		const scale = radiusMultiplier * (config?.radiusMultiplier || 1)
+		moon.scale.set(scale, scale, scale)
+	}, [moon, radiusMultiplier, config?.radiusMultiplier])
 
 	return moon
 }
