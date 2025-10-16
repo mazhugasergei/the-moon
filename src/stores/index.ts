@@ -1,3 +1,4 @@
+import { deepMerge } from "@/utils"
 import { create } from "zustand"
 
 type State = {
@@ -52,7 +53,7 @@ type State = {
 	resetConfig: () => void
 }
 
-const defaultState: State = {
+const defaultState: Omit<State, "setSelected" | "updateConfig" | "resetConfig"> = {
 	debug: false,
 	selected: "moon",
 	radiusMultiplier: 0.0005,
@@ -99,23 +100,17 @@ const defaultState: State = {
 		cameraNear: 0.1,
 		cameraFar: 5000 + 10000 + 20,
 	},
-	setSelected: () => {},
-	updateConfig: () => {},
-	resetConfig: () => {},
 }
 
 export const useIndexStore = create<State>((set, get) => ({
 	...defaultState,
+
 	setSelected: (value: SelectedObject) => set({ selected: value }),
-	updateConfig: (partial: Partial<State>) => {
-		const current = get()
-		set({ ...current, ...partial })
-	},
+
+	updateConfig: (partial: Partial<State>) => set((state) => deepMerge(state, partial)),
+
 	resetConfig: () => {
 		const current = get()
-		set({
-			...defaultState,
-			selected: current.selected,
-		})
+		set({ ...defaultState, selected: current.selected })
 	},
 }))
