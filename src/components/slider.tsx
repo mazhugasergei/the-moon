@@ -2,6 +2,7 @@
 
 import { MinusIcon, PlusIcon } from "lucide-react"
 import { useEffect, useRef } from "react"
+import { Button } from "./button"
 
 interface Props {
 	label: string
@@ -55,23 +56,22 @@ export function Slider({ label, value, min, max, step = 1, onChange }: Props) {
 	}
 
 	return (
-		<div className="flex flex-col px-3 py-2">
-			<label className="mb-1 flex items-center justify-between">
+		<div className="flex flex-col space-y-1">
+			<label className="flex items-center justify-between gap-2">
 				<span>{label}:</span>
-				<span style={{ display: "inline-block", width: `${decimals + 3}ch`, textAlign: "right" }}>
-					{value.toFixed(decimals)}
-				</span>
+				<span className="text-right">{value.toFixed(decimals)}</span>
 			</label>
+
 			<div className="flex items-center gap-2">
-				<button
+				<Button
 					type="button"
+					variant="ghost"
 					onMouseDown={() => handleMouseDown(-step)}
 					onMouseUp={handleMouseUp}
 					onMouseLeave={handleMouseUp}
-					className="rounded p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700"
 				>
 					<MinusIcon size={16} />
-				</button>
+				</Button>
 				<input
 					type="range"
 					min={min}
@@ -81,15 +81,15 @@ export function Slider({ label, value, min, max, step = 1, onChange }: Props) {
 					onChange={(e) => onChange(Number(e.target.value))}
 					className="w-full"
 				/>
-				<button
+				<Button
 					type="button"
+					variant="ghost"
 					onMouseDown={() => handleMouseDown(step)}
 					onMouseUp={handleMouseUp}
 					onMouseLeave={handleMouseUp}
-					className="rounded p-1 hover:bg-neutral-200 dark:hover:bg-neutral-700"
 				>
 					<PlusIcon size={16} />
-				</button>
+				</Button>
 			</div>
 		</div>
 	)
