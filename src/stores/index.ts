@@ -54,9 +54,9 @@ type State = {
 
 const defaultState: State = {
 	debug: false,
-	selected: "moon",
+	selected: "earth",
 	radiusMultiplier: 0.0005,
-	speedMultiplier: 100,
+	speedMultiplier: 10000,
 	starfield: {
 		starCount: 1000,
 		starMinDistance: 5000,
@@ -80,7 +80,7 @@ const defaultState: State = {
 		earthRotationSpeed: (2 * Math.PI) / 86_400,
 	},
 	clouds: {
-		cloudsRotationSpeed: 0.00001,
+		cloudsRotationSpeed: 0.000005,
 	},
 	cursor: {
 		cursorHideDelay: 2000,

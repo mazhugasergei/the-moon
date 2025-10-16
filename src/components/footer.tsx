@@ -45,7 +45,7 @@ export function Footer() {
 							label="Speed Multiplier"
 							value={speedMultiplier}
 							min={1}
-							max={10001}
+							max={50001}
 							step={10}
 							onChange={(v) => updateConfig({ speedMultiplier: v })}
 						/>

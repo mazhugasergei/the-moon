@@ -3,7 +3,7 @@
 import ldem_3_8bit from "@/assets/images/ldem_3_8bit.jpg"
 import lroc_color_poles_1k from "@/assets/images/lroc_color_poles_1k.jpg"
 import { useIndexStore } from "@/stores"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Mesh, MeshStandardMaterial, SphereGeometry, TextureLoader } from "three"
 import { createAxis } from "../lib/objects/axis"
 
@@ -15,6 +15,7 @@ interface Config {
 
 export function useMoon(config?: Config) {
 	const [moon, setMoon] = useState<Mesh | null>(null)
+	const frameIdRef = useRef<number | null>(null)
 
 	const {
 		radiusMultiplier,
@@ -29,7 +30,6 @@ export function useMoon(config?: Config) {
 		const bumpTexture = loader.load(ldem_3_8bit.src)
 
 		const geometry = new SphereGeometry(moonRadius, config?.segments || 256, config?.segments || 256)
-
 		const material = new MeshStandardMaterial({
 			map: colorTexture,
 			bumpMap: bumpTexture,
@@ -58,23 +58,30 @@ export function useMoon(config?: Config) {
 		}
 	}, [moonRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
 
-	// handle rotation
+	// rotation
 	useEffect(() => {
 		if (!moon) return
-
-		let frameId: number
-		const rotationSpeed = moonRotationSpeed * speedMultiplier
+		let lastTime = performance.now()
 
 		const animate = () => {
-			frameId = requestAnimationFrame(animate)
-			moon.rotateY(rotationSpeed)
+			const now = performance.now()
+			const delta = (now - lastTime) / 1000
+			lastTime = now
+
+			const angularSpeed = moonRotationSpeed * speedMultiplier
+			moon.rotateY(angularSpeed * delta)
+
+			frameIdRef.current = requestAnimationFrame(animate)
 		}
+
 		animate()
 
-		return () => cancelAnimationFrame(frameId)
+		return () => {
+			if (frameIdRef.current !== null) cancelAnimationFrame(frameIdRef.current)
+		}
 	}, [moon, moonRotationSpeed, speedMultiplier])
 
-	// handle dynamic scaling
+	// dynamic scaling
 	useEffect(() => {
 		if (!moon) return
 		const scale = radiusMultiplier * (config?.radiusMultiplier || 1)

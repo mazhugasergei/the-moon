@@ -2,7 +2,7 @@
 
 import earth_clouds from "@/assets/images/Earth-clouds.png"
 import { useIndexStore } from "@/stores"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Mesh, MeshStandardMaterial, SphereGeometry, TextureLoader } from "three"
 
 interface CloudsConfig {
@@ -12,6 +12,7 @@ interface CloudsConfig {
 
 export function useClouds(config?: CloudsConfig) {
 	const [clouds, setClouds] = useState<Mesh | null>(null)
+	const frameIdRef = useRef<number | null>(null)
 
 	const {
 		radiusMultiplier,
@@ -26,7 +27,6 @@ export function useClouds(config?: CloudsConfig) {
 		const cloudTexture = loader.load(earth_clouds.src)
 
 		const geometry = new SphereGeometry(earthRadius + 1, config?.segments || 256, config?.segments || 256)
-
 		const material = new MeshStandardMaterial({
 			map: cloudTexture,
 			transparent: true,
@@ -47,17 +47,24 @@ export function useClouds(config?: CloudsConfig) {
 	// rotation
 	useEffect(() => {
 		if (!clouds) return
-
-		let frameId: number
-		const rotationSpeed = cloudsRotationSpeed * speedMultiplier
+		let lastTime = performance.now()
 
 		const animate = () => {
-			frameId = requestAnimationFrame(animate)
-			clouds.rotateY(rotationSpeed)
+			const now = performance.now()
+			const delta = (now - lastTime) / 1000
+			lastTime = now
+
+			const angularSpeed = cloudsRotationSpeed * speedMultiplier
+			clouds.rotateY(angularSpeed * delta)
+
+			frameIdRef.current = requestAnimationFrame(animate)
 		}
+
 		animate()
 
-		return () => cancelAnimationFrame(frameId)
+		return () => {
+			if (frameIdRef.current !== null) cancelAnimationFrame(frameIdRef.current)
+		}
 	}, [clouds, cloudsRotationSpeed, speedMultiplier])
 
 	return clouds

@@ -19,6 +19,9 @@ export function Earth({ world }: Props) {
 		moon: { moonDistance, moonDistanceMultiplier, moonOrbitSpeed },
 	} = useIndexStore((state) => state)
 
+	const speedMultiplierRef = useRef(speedMultiplier)
+	speedMultiplierRef.current = speedMultiplier // update ref each render
+
 	const radiusMultiplier = 0.3
 	const earth = useEarth({ radiusMultiplier })
 	const clouds = useClouds({ radiusMultiplier })
@@ -53,18 +56,42 @@ export function Earth({ world }: Props) {
 
 	// handle orbit rotation
 	useEffect(() => {
-		const moonPivot = moonPivotRef.current
-		if (!moonPivot) return
+		if (!world || !earth || !clouds || !moon) return
 
+		earth.add(clouds)
+		world.add(earth)
+
+		const moonPivot = new Object3D()
+		moonPivot.rotation.x = MathUtils.degToRad(5)
+		moon.position.set(moonDistance * moonDistanceMultiplier, 0, 0)
+		moonPivot.add(moon)
+		world.add(moonPivot)
+
+		moonPivotRef.current = moonPivot
+
+		let lastTime = performance.now()
 		let frameId: number
+
 		const animate = () => {
+			const now = performance.now()
+			const delta = (now - lastTime) / 1000
+			lastTime = now
+
+			// use the latest speedMultiplier dynamically
+			moonPivot.rotateY(moonOrbitSpeed * speedMultiplierRef.current * delta)
+
 			frameId = requestAnimationFrame(animate)
-			moonPivot.rotateY(moonOrbitSpeed * speedMultiplier)
 		}
+
 		animate()
 
-		return () => cancelAnimationFrame(frameId)
-	}, [moonOrbitSpeed, speedMultiplier])
+		return () => {
+			world.remove(earth)
+			world.remove(moonPivot)
+			moonPivotRef.current = null
+			cancelAnimationFrame(frameId)
+		}
+	}, [world, earth, clouds, moon, moonDistance, moonDistanceMultiplier, moonOrbitSpeed])
 
 	return null
 }
