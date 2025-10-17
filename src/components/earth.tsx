@@ -15,8 +15,8 @@ export function Earth({ world }: Props) {
 	if (!world) return null
 
 	const {
-		radiusMultiplier,
-		speedMultiplier,
+		scale: radiusMultiplier,
+		speed: speedMultiplier,
 		moon: { moonDistance, moonDistanceMultiplier, moonOrbitSpeed },
 	} = useIndexStore((state) => state)
 

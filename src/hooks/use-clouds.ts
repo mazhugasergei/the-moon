@@ -15,8 +15,8 @@ export function useClouds(config?: CloudsConfig): Mesh | null {
 	const frameIdRef = useRef<number | null>(null)
 
 	const {
-		radiusMultiplier,
-		speedMultiplier,
+		scale: radiusMultiplier,
+		speed: speedMultiplier,
 		earth: { earthRadius },
 		clouds: { cloudsRotationSpeed },
 	} = useIndexStore((state) => state)
@@ -42,13 +42,21 @@ export function useClouds(config?: CloudsConfig): Mesh | null {
 			material.dispose()
 			setClouds(null)
 		}
-	}, [earthRadius, config?.radiusMultiplier, config?.segments])
+	}, [earthRadius, config?.segments])
+
+	// rebuild geometry when radius or segments change
+	useEffect(() => {
+		if (!clouds) return
+		const oldGeometry = clouds.geometry
+		const newGeometry = new SphereGeometry(earthRadius + 1, config?.segments || 256, config?.segments || 256)
+		clouds.geometry = newGeometry
+		oldGeometry.dispose()
+	}, [clouds, earthRadius, config?.segments])
 
 	// rotation
 	useEffect(() => {
 		if (!clouds) return
 		let lastTime = performance.now()
-
 		const animate = () => {
 			const now = performance.now()
 			const delta = (now - lastTime) / 1000
@@ -59,7 +67,6 @@ export function useClouds(config?: CloudsConfig): Mesh | null {
 
 			frameIdRef.current = requestAnimationFrame(animate)
 		}
-
 		animate()
 
 		return () => {

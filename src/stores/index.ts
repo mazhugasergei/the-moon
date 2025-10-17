@@ -4,8 +4,8 @@ import { create } from "zustand"
 type State = {
 	debug: boolean
 	selected: SelectedObject
-	radiusMultiplier: number
-	speedMultiplier: number
+	scale: number
+	speed: number
 	starfield: {
 		starCount: number
 		starMinDistance: number
@@ -55,9 +55,9 @@ type State = {
 
 const defaultState: Omit<State, "setSelected" | "updateConfig" | "resetConfig"> = {
 	debug: false,
-	selected: "earth",
-	radiusMultiplier: 0.0005,
-	speedMultiplier: 10000,
+	selected: "moon",
+	scale: 0.0005,
+	speed: 10000,
 	starfield: {
 		starCount: 1000,
 		starMinDistance: 5000,

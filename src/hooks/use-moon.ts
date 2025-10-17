@@ -13,13 +13,13 @@ interface Config {
 	radiusMultiplier?: number
 }
 
-export function useMoon(config?: Config) {
+export function useMoon(config?: Config): Mesh | null {
 	const [moon, setMoon] = useState<Mesh | null>(null)
 	const frameIdRef = useRef<number | null>(null)
 
 	const {
-		radiusMultiplier,
-		speedMultiplier,
+		scale: radiusMultiplier,
+		speed: speedMultiplier,
 		moon: { moonRadius, moonRotationSpeed },
 	} = useIndexStore((state) => state)
 
@@ -44,8 +44,10 @@ export function useMoon(config?: Config) {
 		moonMesh.castShadow = true
 		moonMesh.receiveShadow = true
 
+		// initial axis
 		if (config?.showAxis) {
 			const rotationAxis = createAxis({ length: moonRadius * 1.33 })
+			rotationAxis.name = "rotationAxis"
 			moonMesh.add(rotationAxis)
 		}
 
@@ -56,7 +58,7 @@ export function useMoon(config?: Config) {
 			material.dispose()
 			setMoon(null)
 		}
-	}, [moonRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
+	}, [moonRadius, config?.segments, config?.showAxis])
 
 	// rotation
 	useEffect(() => {
@@ -73,7 +75,6 @@ export function useMoon(config?: Config) {
 
 			frameIdRef.current = requestAnimationFrame(animate)
 		}
-
 		animate()
 
 		return () => {
@@ -87,6 +88,31 @@ export function useMoon(config?: Config) {
 		const scale = radiusMultiplier * (config?.radiusMultiplier || 1)
 		moon.scale.set(scale, scale, scale)
 	}, [moon, radiusMultiplier, config?.radiusMultiplier])
+
+	// update segments
+	useEffect(() => {
+		if (!moon) return
+		const oldGeometry = moon.geometry
+		const newGeometry = new SphereGeometry(moonRadius, config?.segments || 256, config?.segments || 256)
+		moon.geometry = newGeometry
+		oldGeometry.dispose()
+	}, [moon, config?.segments, moonRadius])
+
+	// update axis visibility
+	useEffect(() => {
+		if (!moon) return
+
+		// remove existing axis
+		const existing = moon.getObjectByName("rotationAxis")
+		if (existing) moon.remove(existing)
+
+		// add new one if enabled
+		if (config?.showAxis) {
+			const rotationAxis = createAxis({ length: moonRadius * 1.33 })
+			rotationAxis.name = "rotationAxis"
+			moon.add(rotationAxis)
+		}
+	}, [moon, config?.showAxis, moonRadius])
 
 	return moon
 }

@@ -6,6 +6,8 @@ import { Button } from "./button"
 
 interface Props {
 	label: string
+	valuePrefix?: string
+	valueSuffix?: string
 	value: number
 	min: number
 	max: number
@@ -13,7 +15,7 @@ interface Props {
 	onChange: (v: number) => void
 }
 
-export function Slider({ label, value, min, max, step = 1, onChange }: Props) {
+export function Slider({ label, valuePrefix, valueSuffix, value, min, max, step = 1, onChange }: Props) {
 	const getDecimals = (num: number) => {
 		const str = num.toString()
 		if (!str.includes(".")) return 0
@@ -57,9 +59,13 @@ export function Slider({ label, value, min, max, step = 1, onChange }: Props) {
 
 	return (
 		<div className="flex flex-col space-y-1">
-			<label className="flex items-center justify-between gap-2">
-				<span>{label}:</span>
-				<span className="text-right">{value.toFixed(decimals)}</span>
+			<label className="flex items-center justify-between gap-4">
+				<span>{label}</span>
+				<span className="text-right">
+					{valuePrefix}
+					{value.toFixed(decimals)}
+					{valueSuffix}
+				</span>
 			</label>
 
 			<div className="flex items-center gap-2">
@@ -79,7 +85,7 @@ export function Slider({ label, value, min, max, step = 1, onChange }: Props) {
 					step={step}
 					value={value}
 					onChange={(e) => onChange(Number(e.target.value))}
-					className="w-full"
+					className="w-full min-w-40"
 				/>
 				<Button
 					type="button"

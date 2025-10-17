@@ -13,7 +13,7 @@ interface StarfieldConfig {
 	color?: number
 }
 
-export function useStarfield(config?: StarfieldConfig) {
+export function useStarfield(config?: StarfieldConfig): Points | null {
 	const [starfield, setStarfield] = useState<Points | null>(null)
 
 	const {
@@ -51,30 +51,35 @@ export function useStarfield(config?: StarfieldConfig) {
 		const material = new ShaderMaterial({
 			uniforms: { color: { value: new Color(color) } },
 			vertexShader: `
-        attribute float size;
-        varying vec3 vColor;
-        void main() {
-          vColor = vec3(${new Color(color).r.toFixed(3)}, ${new Color(color).g.toFixed(3)}, ${new Color(color).b.toFixed(3)});
-          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+				attribute float size;
+				varying vec3 vColor;
+				void main() {
+					vColor = vec3(${new Color(color).r.toFixed(3)}, ${new Color(color).g.toFixed(3)}, ${new Color(color).b.toFixed(3)});
+					vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
 
-          float distance = max(1.0, -mvPosition.z);
-          gl_PointSize = clamp(size * (300.0 / distance), 1.0, 50.0);
+					float distance = max(1.0, -mvPosition.z);
+					gl_PointSize = clamp(size * (300.0 / distance), 1.0, 50.0);
 
-          gl_Position = projectionMatrix * mvPosition;
-        }
-      `,
+					gl_Position = projectionMatrix * mvPosition;
+				}
+			`,
 			fragmentShader: `
-        varying vec3 vColor;
-        void main() {
-          if (length(gl_PointCoord - 0.5) > 0.5) discard;
-          gl_FragColor = vec4(vColor, 1.0);
-        }
-      `,
+				varying vec3 vColor;
+				void main() {
+					if (length(gl_PointCoord - 0.5) > 0.5) discard;
+					gl_FragColor = vec4(vColor, 1.0);
+				}
+			`,
 		})
 
-		setStarfield(new Points(geometry, material))
+		const points = new Points(geometry, material)
+		setStarfield(points)
 
-		return () => setStarfield(null)
+		return () => {
+			geometry.dispose()
+			material.dispose()
+			setStarfield(null)
+		}
 	}, [
 		starCount,
 		starSpread,

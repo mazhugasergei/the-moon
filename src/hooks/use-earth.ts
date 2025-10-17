@@ -12,13 +12,13 @@ interface EarthConfig {
 	showAxis?: boolean
 }
 
-export function useEarth(config?: EarthConfig) {
+export function useEarth(config?: EarthConfig): Mesh | null {
 	const [earth, setEarth] = useState<Mesh | null>(null)
 	const frameIdRef = useRef<number | null>(null)
 
 	const {
-		radiusMultiplier,
-		speedMultiplier,
+		scale: radiusMultiplier,
+		speed: speedMultiplier,
 		earth: { earthRadius, earthRotationSpeed },
 	} = useIndexStore((state) => state)
 
@@ -37,14 +37,6 @@ export function useEarth(config?: EarthConfig) {
 		const earthMesh = new Mesh(geometry, material)
 		earthMesh.castShadow = true
 		earthMesh.receiveShadow = true
-
-		if (config?.showAxis) {
-			const rotationAxis = createAxis({
-				length: earthRadius * 1.33,
-			})
-			earthMesh.add(rotationAxis)
-		}
-
 		setEarth(earthMesh)
 
 		return () => {
@@ -52,13 +44,21 @@ export function useEarth(config?: EarthConfig) {
 			material.dispose()
 			setEarth(null)
 		}
-	}, [earthRadius, config?.radiusMultiplier, config?.segments, config?.showAxis])
+	}, [earthRadius, config?.segments])
+
+	// rebuild geometry when radius or segments change
+	useEffect(() => {
+		if (!earth) return
+		const oldGeometry = earth.geometry
+		const newGeometry = new SphereGeometry(earthRadius, config?.segments || 256, config?.segments || 256)
+		earth.geometry = newGeometry
+		oldGeometry.dispose()
+	}, [earth, earthRadius, config?.segments])
 
 	// rotation
 	useEffect(() => {
 		if (!earth) return
 		let lastTime = performance.now()
-
 		const animate = () => {
 			const now = performance.now()
 			const delta = (now - lastTime) / 1000
@@ -69,13 +69,11 @@ export function useEarth(config?: EarthConfig) {
 
 			frameIdRef.current = requestAnimationFrame(animate)
 		}
-
 		animate()
-
 		return () => {
 			if (frameIdRef.current !== null) cancelAnimationFrame(frameIdRef.current)
 		}
-	}, [earth, speedMultiplier, earthRotationSpeed])
+	}, [earth, earthRotationSpeed, speedMultiplier])
 
 	// dynamic scaling
 	useEffect(() => {
@@ -83,6 +81,19 @@ export function useEarth(config?: EarthConfig) {
 		const scale = radiusMultiplier * (config?.radiusMultiplier || 1)
 		earth.scale.set(scale, scale, scale)
 	}, [earth, radiusMultiplier, config?.radiusMultiplier])
+
+	// show axis
+	useEffect(() => {
+		if (!earth) return
+		const existing = earth.getObjectByName("rotationAxis")
+		if (existing) earth.remove(existing)
+
+		if (config?.showAxis) {
+			const rotationAxis = createAxis({ length: earthRadius * 1.33 })
+			rotationAxis.name = "rotationAxis"
+			earth.add(rotationAxis)
+		}
+	}, [earth, config?.showAxis, earthRadius])
 
 	return earth
 }
