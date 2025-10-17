@@ -1,4 +1,4 @@
-import { deepMerge } from "@/utils"
+import { deepMerge, DeepPartial } from "@/utils"
 import { create } from "zustand"
 
 type State = {
@@ -49,13 +49,13 @@ type State = {
 		cameraFar: number
 	}
 	setSelected: (value: SelectedObject) => void
-	updateConfig: (partial: Partial<State>) => void
+	updateConfig: (partial: DeepPartial<State>) => void
 	resetConfig: () => void
 }
 
 const defaultState: Omit<State, "setSelected" | "updateConfig" | "resetConfig"> = {
 	debug: false,
-	selected: "moon",
+	selected: "earth",
 	radiusMultiplier: 0.0005,
 	speedMultiplier: 10000,
 	starfield: {
@@ -70,7 +70,7 @@ const defaultState: Omit<State, "setSelected" | "updateConfig" | "resetConfig"> 
 		inertiaDamping: 0.95,
 	},
 	moon: {
-		moonDistanceMultiplier: 0.000008,
+		moonDistanceMultiplier: 0.015,
 		moonDistance: 384400,
 		moonRadius: 1737.4,
 		moonRotationSpeed: (2 * Math.PI) / 2_359_200,
@@ -107,7 +107,7 @@ export const useIndexStore = create<State>((set, get) => ({
 
 	setSelected: (value: SelectedObject) => set({ selected: value }),
 
-	updateConfig: (partial: Partial<State>) => set((state) => deepMerge(state, partial)),
+	updateConfig: (partial) => set((state) => deepMerge(state, partial)),
 
 	resetConfig: () => {
 		const current = get()

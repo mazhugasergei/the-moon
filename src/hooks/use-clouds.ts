@@ -10,7 +10,7 @@ interface CloudsConfig {
 	segments?: number
 }
 
-export function useClouds(config?: CloudsConfig) {
+export function useClouds(config?: CloudsConfig): Mesh | null {
 	const [clouds, setClouds] = useState<Mesh | null>(null)
 	const frameIdRef = useRef<number | null>(null)
 

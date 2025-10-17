@@ -9,7 +9,12 @@ import { Slider } from "./slider"
 
 export function Footer() {
 	const debug = useIndexStore((state) => state.debug)
-	const { radiusMultiplier, speedMultiplier } = useIndexStore((state) => state)
+	const {
+		selected,
+		radiusMultiplier,
+		speedMultiplier,
+		moon: { moonDistanceMultiplier },
+	} = useIndexStore((state) => state)
 	const updateConfig = useIndexStore((state) => state.updateConfig)
 	const resetConfig = useIndexStore((state) => state.resetConfig)
 
@@ -32,7 +37,7 @@ export function Footer() {
 					</DropdownItem> */}
 					<DropdownItem>
 						<Slider
-							label="Radius Multiplier"
+							label="Radius multiplier"
 							value={radiusMultiplier}
 							min={0}
 							max={0.001}
@@ -42,7 +47,7 @@ export function Footer() {
 					</DropdownItem>
 					<DropdownItem>
 						<Slider
-							label="Speed Multiplier"
+							label="Speed multiplier"
 							value={speedMultiplier}
 							min={1}
 							max={50001}
@@ -50,6 +55,18 @@ export function Footer() {
 							onChange={(v) => updateConfig({ speedMultiplier: v })}
 						/>
 					</DropdownItem>
+					{selected === "earth" && (
+						<DropdownItem>
+							<Slider
+								label="Moon distance multiplier"
+								value={moonDistanceMultiplier}
+								min={0}
+								max={1}
+								step={0.005}
+								onChange={(v) => updateConfig({ moon: { moonDistanceMultiplier: v } })}
+							/>
+						</DropdownItem>
+					)}
 					<DropdownItem>
 						<Button variant="outline" onClick={resetConfig} className="w-full">
 							Reset
